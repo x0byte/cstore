@@ -38,7 +38,7 @@ fun ProfileScreen(viewModel: AuthViewModel, onSignOut: () -> Unit, onCreateListi
     Column(
         modifier = modifier
             .fillMaxSize()
-            .padding(16.dp),
+            .padding(horizontal = 16.dp, vertical = 4.dp),
         verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
