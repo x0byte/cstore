@@ -14,6 +14,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.platform.LocalContext
@@ -26,6 +27,9 @@ import com.example.cstore.ui.auth.AuthViewModel
 import com.example.cstore.ui.auth.LoginScreen
 import com.example.cstore.ui.auth.SignUpScreen
 import com.example.cstore.ui.auth.ProfileScreen
+import com.example.cstore.ui.listing.CreateListingScreen
+import com.example.cstore.ui.home.HomeScreen
+import com.example.cstore.ui.home.HomeViewModel
 import com.google.android.gms.auth.api.signin.GoogleSignIn
 import com.google.android.gms.auth.api.signin.GoogleSignInOptions
 import com.google.android.gms.common.api.ApiException
@@ -48,6 +52,7 @@ fun App() {
     val navController = rememberNavController()
     val viewModel = AuthViewModel()
     val state by viewModel.uiState.collectAsState()
+    val homeViewModel = remember { HomeViewModel() }
 
     val context = LocalContext.current
     val gso = GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
@@ -85,7 +90,7 @@ fun App() {
                 onGoogleClick = { googleLauncher.launch(googleSignInClient.signInIntent) },
                 onSuccess = {
                     viewModel.currentUserUid()?.let { viewModel.loadUserProfile(it) }
-                    navController.navigate("profile") { popUpTo("login") { inclusive = true } }
+                    navController.navigate("home") { popUpTo("login") { inclusive = true } }
                 }
             )
         }
@@ -96,8 +101,15 @@ fun App() {
                 onLoginNavigate = { navController.popBackStack() },
                 onSuccess = {
                     viewModel.currentUserUid()?.let { viewModel.loadUserProfile(it) }
-                    navController.navigate("profile") { popUpTo("login") { inclusive = true } }
+                    navController.navigate("home") { popUpTo("login") { inclusive = true } }
                 }
+            )
+        }
+        composable("home") {
+            HomeScreen(
+                viewModel = homeViewModel,
+                onCreateListing = { navController.navigate("create_listing") },
+                onProfile = { navController.navigate("profile") }
             )
         }
         composable("profile") {
@@ -105,7 +117,16 @@ fun App() {
                 viewModel = viewModel,
                 onSignOut = {
                     viewModel.signOut()
-                    navController.navigate("login") { popUpTo("profile") { inclusive = true } }
+                    navController.navigate("login") { popUpTo("home") { inclusive = true } }
+                },
+                onCreateListing = { navController.navigate("create_listing") }
+            )
+        }
+        composable("create_listing") {
+            CreateListingScreen(
+                viewModel = viewModel,
+                onSaved = {
+                    navController.navigate("profile") { popUpTo("create_listing") { inclusive = true } }
                 }
             )
         }

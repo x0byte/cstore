@@ -2,10 +2,12 @@ package com.example.cstore.ui.auth
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -20,7 +22,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 
 @Composable
-fun ProfileScreen(viewModel: AuthViewModel, onSignOut: () -> Unit) {
+fun ProfileScreen(viewModel: AuthViewModel, onSignOut: () -> Unit, onCreateListing: (() -> Unit)? = null) {
     val profile by viewModel.profile.collectAsState()
     val state by viewModel.uiState.collectAsState()
 
@@ -59,7 +61,11 @@ fun ProfileScreen(viewModel: AuthViewModel, onSignOut: () -> Unit) {
                     }
                 }
                 Spacer(Modifier.height(16.dp))
-                Button(onClick = onSignOut) { Text("Sign Out") }
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Button(onClick = { onCreateListing?.invoke() }) { Text("Create Listing") }
+                    Spacer(Modifier.width(12.dp))
+                    Button(onClick = onSignOut) { Text("Sign Out") }
+                }
             }
         }
     }
