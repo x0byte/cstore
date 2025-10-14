@@ -15,6 +15,7 @@ import androidx.compose.material3.Divider
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
@@ -22,14 +23,22 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 
 @Composable
-fun ProfileScreen(viewModel: AuthViewModel, onSignOut: () -> Unit, onCreateListing: (() -> Unit)? = null) {
+fun ProfileScreen(viewModel: AuthViewModel, onSignOut: () -> Unit, onCreateListing: (() -> Unit)? = null, modifier: Modifier = Modifier) {
     val profile by viewModel.profile.collectAsState()
     val state by viewModel.uiState.collectAsState()
 
+    // Load profile when screen is first displayed
+    LaunchedEffect(Unit) {
+        val uid = viewModel.currentUserUid()
+        if (uid != null) {
+            viewModel.loadUserProfile(uid)
+        }
+    }
+
     Column(
-        modifier = Modifier
+        modifier = modifier
             .fillMaxSize()
-            .padding(24.dp),
+            .padding(16.dp),
         verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally
     ) {

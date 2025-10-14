@@ -83,71 +83,72 @@ fun App() {
         }
     }
 
-    // Check if user is authenticated to show bottom nav
-    val isAuthenticated = viewModel.currentUserUid() != null
-
-    if (isAuthenticated) {
-        // Show main app with bottom navigation
-        Scaffold(
-            bottomBar = { BottomNavBar(navController) }
-        ) { innerPadding ->
-            NavHost(
-                navController = navController,
-                startDestination = "home",
-                modifier = Modifier.padding(innerPadding)
-            ) {
-                composable("home") {
-                    HomeScreen(
-                        viewModel = homeViewModel,
-                        onCreateListing = { navController.navigate("create_listing") },
-                        onProfile = { navController.navigate("profile") }
-                    )
+    NavHost(navController = navController, startDestination = "login") {
+        composable("login") {
+            LoginScreen(
+                state = state,
+                onSignIn = { email, password -> viewModel.signIn(email, password) },
+                onSignUpNavigate = { navController.navigate("signup") },
+                onGoogleClick = { googleLauncher.launch(googleSignInClient.signInIntent) },
+                onSuccess = {
+                    viewModel.currentUserUid()?.let { viewModel.loadUserProfile(it) }
+                    navController.navigate("home") { popUpTo("login") { inclusive = true } }
                 }
-                composable("create_listing") {
-                    CreateListingScreen(
-                        viewModel = viewModel,
-                        onSaved = { navController.navigate("home") }
-                    )
-                }
-                composable("map") {
-                    MapScreen()
-                }
-                composable("profile") {
-                    ProfileScreen(
-                        viewModel = viewModel,
-                        onSignOut = {
-                            viewModel.signOut()
-                            navController.navigate("login") { popUpTo("home") { inclusive = true } }
-                        },
-                        onCreateListing = { navController.navigate("create_listing") }
-                    )
-                }
-            }
+            )
         }
-    } else {
-        // Show auth screens without bottom nav
-        NavHost(navController = navController, startDestination = "login") {
-            composable("login") {
-                LoginScreen(
-                    state = state,
-                    onSignIn = { email, password -> viewModel.signIn(email, password) },
-                    onSignUpNavigate = { navController.navigate("signup") },
-                    onGoogleClick = { googleLauncher.launch(googleSignInClient.signInIntent) },
-                    onSuccess = {
-                        viewModel.currentUserUid()?.let { viewModel.loadUserProfile(it) }
-                        navController.navigate("home") { popUpTo("login") { inclusive = true } }
-                    }
+        composable("signup") {
+            SignUpScreen(
+                state = state,
+                onSignUp = { email, password -> viewModel.signUp(email, password) },
+                onLoginNavigate = { navController.popBackStack() },
+                onSuccess = {
+                    viewModel.currentUserUid()?.let { viewModel.loadUserProfile(it) }
+                    navController.navigate("home") { popUpTo("login") { inclusive = true } }
+                }
+            )
+        }
+        composable("home") {
+            Scaffold(
+                bottomBar = { BottomNavBar(navController) }
+            ) { innerPadding ->
+                HomeScreen(
+                    viewModel = homeViewModel,
+                    onCreateListing = { navController.navigate("create_listing") },
+                    onProfile = { navController.navigate("profile") },
+                    modifier = Modifier.padding(innerPadding)
                 )
             }
-            composable("signup") {
-                SignUpScreen(
-                    state = state,
-                    onSignUp = { email, password -> viewModel.signUp(email, password) },
-                    onLoginNavigate = { navController.popBackStack() },
-                    onSuccess = {
-                        viewModel.currentUserUid()?.let { viewModel.loadUserProfile(it) }
-                        navController.navigate("home") { popUpTo("login") { inclusive = true } }
-                    }
+        }
+        composable("create_listing") {
+            Scaffold(
+                bottomBar = { BottomNavBar(navController) }
+            ) { innerPadding ->
+                CreateListingScreen(
+                    viewModel = viewModel,
+                    onSaved = { navController.navigate("home") },
+                    modifier = Modifier.padding(innerPadding)
+                )
+            }
+        }
+        composable("map") {
+            Scaffold(
+                bottomBar = { BottomNavBar(navController) }
+            ) { innerPadding ->
+                MapScreen(modifier = Modifier.padding(innerPadding))
+            }
+        }
+        composable("profile") {
+            Scaffold(
+                bottomBar = { BottomNavBar(navController) }
+            ) { innerPadding ->
+                ProfileScreen(
+                    viewModel = viewModel,
+                    onSignOut = {
+                        viewModel.signOut()
+                        navController.navigate("login") { popUpTo("home") { inclusive = true } }
+                    },
+                    onCreateListing = { navController.navigate("create_listing") },
+                    modifier = Modifier.padding(innerPadding)
                 )
             }
         }

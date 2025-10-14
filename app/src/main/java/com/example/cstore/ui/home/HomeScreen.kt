@@ -32,7 +32,8 @@ import com.example.cstore.ui.components.ListingCard
 fun HomeScreen(
     viewModel: HomeViewModel,
     onCreateListing: () -> Unit,
-    onProfile: () -> Unit
+    onProfile: () -> Unit,
+    modifier: Modifier = Modifier
 ) {
     val state by viewModel.uiState.collectAsState()
 
@@ -41,17 +42,18 @@ fun HomeScreen(
         viewModel.loadListings()
     }
 
-    Scaffold(
-        topBar = {
-            TopAppBar(
-                title = { Text("CircularStore") },
-                actions = {
-                    TextButton(onClick = onCreateListing) { Text("Add") }
-                    TextButton(onClick = onProfile) { Text("Profile") }
-                }
-            )
-        }
-    ) { inner ->
+        Scaffold(
+            topBar = {
+                TopAppBar(
+                    title = { Text("CircularStore") },
+                    actions = {
+                        TextButton(onClick = onCreateListing) { Text("Add") }
+                        TextButton(onClick = onProfile) { Text("Profile") }
+                    }
+                )
+            },
+            modifier = modifier
+        ) { inner ->
         when (val ui = state) {
             is HomeUiState.Loading -> {
                 Column(

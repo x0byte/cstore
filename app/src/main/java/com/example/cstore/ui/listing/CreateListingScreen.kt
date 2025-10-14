@@ -65,7 +65,8 @@ import androidx.compose.ui.draw.clip
 fun CreateListingScreen(
     viewModel: AuthViewModel,
     repository: ListingRepository = ListingRepository(),
-    onSaved: () -> Unit
+    onSaved: () -> Unit,
+    modifier: Modifier = Modifier
 ) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
@@ -108,7 +109,7 @@ fun CreateListingScreen(
     }
 
     Surface(
-        modifier = Modifier.fillMaxSize(),
+        modifier = modifier.fillMaxSize(),
         color = MaterialTheme.colorScheme.background
     ) {
         Column(
