@@ -40,6 +40,8 @@ class AuthRepository(
     }
 
     fun getCurrentUserEmail(): String? = firebaseAuth.currentUser?.email
+
+    fun getCurrentUserUid(): String? = firebaseAuth.currentUser?.uid
 }
 
 

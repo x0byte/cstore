@@ -25,6 +25,7 @@ import com.example.cstore.ui.auth.AuthUiState
 import com.example.cstore.ui.auth.AuthViewModel
 import com.example.cstore.ui.auth.LoginScreen
 import com.example.cstore.ui.auth.SignUpScreen
+import com.example.cstore.ui.auth.ProfileScreen
 import com.google.android.gms.auth.api.signin.GoogleSignIn
 import com.google.android.gms.auth.api.signin.GoogleSignInOptions
 import com.google.android.gms.common.api.ApiException
@@ -82,7 +83,10 @@ fun App() {
                 onSignIn = { email, password -> viewModel.signIn(email, password) },
                 onSignUpNavigate = { navController.navigate("signup") },
                 onGoogleClick = { googleLauncher.launch(googleSignInClient.signInIntent) },
-                onSuccess = { navController.navigate("home") { popUpTo("login") { inclusive = true } } }
+                onSuccess = {
+                    viewModel.currentUserUid()?.let { viewModel.loadUserProfile(it) }
+                    navController.navigate("profile") { popUpTo("login") { inclusive = true } }
+                }
             )
         }
         composable("signup") {
@@ -90,26 +94,22 @@ fun App() {
                 state = state,
                 onSignUp = { email, password -> viewModel.signUp(email, password) },
                 onLoginNavigate = { navController.popBackStack() },
-                onSuccess = { navController.navigate("home") { popUpTo("login") { inclusive = true } } }
+                onSuccess = {
+                    viewModel.currentUserUid()?.let { viewModel.loadUserProfile(it) }
+                    navController.navigate("profile") { popUpTo("login") { inclusive = true } }
+                }
             )
         }
-        composable("home") {
-            Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
-                Home(
-                    email = viewModel.currentUserEmail() ?: "",
-                    onSignOut = {
-                        viewModel.signOut()
-                        navController.navigate("login") { popUpTo("home") { inclusive = true } }
-                    },
-                    modifier = Modifier.padding(innerPadding)
-                )
-            }
+        composable("profile") {
+            ProfileScreen(
+                viewModel = viewModel,
+                onSignOut = {
+                    viewModel.signOut()
+                    navController.navigate("login") { popUpTo("profile") { inclusive = true } }
+                }
+            )
         }
     }
 }
 
-@Composable
-fun Home(email: String, onSignOut: () -> Unit, modifier: Modifier = Modifier) {
-    Text(text = "Welcome, $email", modifier = modifier)
-    Button(onClick = onSignOut) { Text("Sign out") }
-}
+// Home removed; navigating directly to Profile per requirements
