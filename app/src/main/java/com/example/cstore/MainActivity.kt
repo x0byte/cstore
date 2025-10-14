@@ -141,7 +141,10 @@ fun App() {
             Scaffold(
                 bottomBar = { BottomNavBar(navController) }
             ) { innerPadding ->
-                MapScreen(modifier = Modifier.padding(innerPadding))
+                MapScreen(
+                    onItemClick = { listingId -> navController.navigate("item_detail/$listingId") },
+                    modifier = Modifier.padding(innerPadding)
+                )
             }
         }
         composable("profile") {

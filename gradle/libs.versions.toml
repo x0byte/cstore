@@ -18,6 +18,8 @@ coil = "2.6.0"
 playServicesLocation = "21.3.0"
 retrofit = "2.9.0"
 gson = "2.10.1"
+google-maps = "18.2.0"
+maps-compose = "4.3.3"
 
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
@@ -46,6 +48,8 @@ google-play-services-location = { group = "com.google.android.gms", name = "play
 retrofit = { group = "com.squareup.retrofit2", name = "retrofit", version.ref = "retrofit" }
 retrofit-gson = { group = "com.squareup.retrofit2", name = "converter-gson", version.ref = "retrofit" }
 gson = { group = "com.google.code.gson", name = "gson", version.ref = "gson" }
+google-maps = { group = "com.google.android.gms", name = "play-services-maps", version.ref = "google-maps" }
+maps-compose = { group = "com.google.maps.android", name = "maps-compose", version.ref = "maps-compose" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }
