@@ -21,15 +21,20 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import androidx.navigation.navArgument
+import androidx.navigation.NavType
 import com.example.cstore.ui.theme.CstoreTheme
 import com.example.cstore.ui.auth.AuthUiState
 import com.example.cstore.ui.auth.AuthViewModel
 import com.example.cstore.ui.auth.LoginScreen
 import com.example.cstore.ui.auth.SignUpScreen
 import com.example.cstore.ui.auth.ProfileScreen
+import com.example.cstore.ui.auth.ProfileViewModel
 import com.example.cstore.ui.listing.CreateListingScreen
 import com.example.cstore.ui.home.HomeScreen
 import com.example.cstore.ui.home.HomeViewModel
+import com.example.cstore.ui.listing.ItemDetailScreen
+import com.example.cstore.ui.listing.ItemDetailViewModel
 import com.example.cstore.ui.map.MapScreen
 import com.example.cstore.ui.navigation.BottomNavBar
 import com.google.android.gms.auth.api.signin.GoogleSignIn
@@ -55,6 +60,7 @@ fun App() {
     val viewModel = AuthViewModel()
     val state by viewModel.uiState.collectAsState()
     val homeViewModel = remember { HomeViewModel() }
+    val profileViewModel = remember { ProfileViewModel() }
 
     val context = LocalContext.current
     val gso = GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
@@ -115,6 +121,7 @@ fun App() {
                     viewModel = homeViewModel,
                     onCreateListing = { navController.navigate("create_listing") },
                     onProfile = { navController.navigate("profile") },
+                    onItemClick = { listingId -> navController.navigate("item_detail/$listingId") },
                     modifier = Modifier.padding(innerPadding)
                 )
             }
@@ -142,15 +149,33 @@ fun App() {
                 bottomBar = { BottomNavBar(navController) }
             ) { innerPadding ->
                 ProfileScreen(
-                    viewModel = viewModel,
+                    authViewModel = viewModel,
+                    profileViewModel = profileViewModel,
                     onSignOut = {
                         viewModel.signOut()
                         navController.navigate("login") { popUpTo("home") { inclusive = true } }
                     },
                     onCreateListing = { navController.navigate("create_listing") },
+                    onItemClick = { listingId -> navController.navigate("item_detail/$listingId") },
                     modifier = Modifier.padding(innerPadding)
                 )
             }
+        }
+        composable(
+            "item_detail/{listingId}",
+            arguments = listOf(navArgument("listingId") { type = NavType.StringType })
+        ) { backStackEntry ->
+            val listingId = backStackEntry.arguments?.getString("listingId") ?: ""
+            val itemDetailViewModel = remember { ItemDetailViewModel() }
+            
+            ItemDetailScreen(
+                listingId = listingId,
+                viewModel = itemDetailViewModel,
+                onBack = { navController.popBackStack() },
+                onRequestItem = { /* Handle request item */ },
+                onChatWithOwner = { /* Handle chat */ },
+                onShareItem = { /* Handle share */ }
+            )
         }
     }
 }

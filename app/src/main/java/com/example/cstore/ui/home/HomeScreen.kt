@@ -38,6 +38,7 @@ fun HomeScreen(
     viewModel: HomeViewModel,
     onCreateListing: () -> Unit,
     onProfile: () -> Unit,
+    onItemClick: (String) -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     val state by viewModel.uiState.collectAsState()
@@ -46,13 +47,8 @@ fun HomeScreen(
     // Load listings when screen is first displayed
     LaunchedEffect(Unit) {
         viewModel.loadListings()
-        // TODO: Replace with your OpenWeatherMap API key
-        // Get free API key from: https://openweathermap.org/api
-        val apiKey = "YOUR_API_KEY_HERE" // Replace this with your actual API key
-        if (apiKey != "YOUR_API_KEY_HERE") {
-            // Load weather for Melbourne as default (you can change this to user's location)
-            viewModel.loadWeather(-37.8136, 144.9631, apiKey)
-        }
+        // Load weather for Melbourne as default (you can change this to user's location)
+        viewModel.loadWeather(-37.8136, 144.9631, "dd6f05f68644e8fa202315bd4704d451")
     }
 
         Scaffold(
@@ -102,7 +98,7 @@ fun HomeScreen(
                     LazyColumn(
                         modifier = Modifier.fillMaxSize().padding(inner),
                         verticalArrangement = Arrangement.spacedBy(12.dp),
-                        contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp)
+                        contentPadding = PaddingValues(horizontal = 16.dp, vertical = 2.dp)
                     ) {
                         // Weather Card
                         item {
@@ -111,7 +107,11 @@ fun HomeScreen(
                         
                         // Listings
                         items(listings) { item ->
-                            ListingCard(listing = item, modifier = Modifier.fillMaxWidth())
+                            ListingCard(
+                                listing = item, 
+                                modifier = Modifier.fillMaxWidth(),
+                                onClick = { onItemClick(item.id) }
+                            )
                         }
                     }
                 }
@@ -128,7 +128,7 @@ fun WeatherCard(
     Card(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(vertical = 8.dp),
+            .padding(vertical = 2.dp),
         shape = RoundedCornerShape(16.dp),
         elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
         colors = CardDefaults.cardColors(
@@ -136,7 +136,7 @@ fun WeatherCard(
         )
     ) {
         Column(
-            modifier = Modifier.padding(16.dp),
+            modifier = Modifier.padding(12.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             when (weatherState) {

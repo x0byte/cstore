@@ -1,6 +1,7 @@
 package com.example.cstore.ui.components
 
 import android.net.Uri
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -20,11 +21,21 @@ import coil.compose.AsyncImage
 import com.example.cstore.data.listing.Listing
 
 @Composable
-fun ListingCard(listing: Listing, modifier: Modifier = Modifier) {
+fun ListingCard(
+    listing: Listing, 
+    modifier: Modifier = Modifier,
+    onClick: (() -> Unit)? = null
+) {
     Card(
         shape = RoundedCornerShape(16.dp),
         elevation = CardDefaults.cardElevation(defaultElevation = 3.dp),
-        modifier = modifier
+        modifier = modifier.then(
+            if (onClick != null) {
+                Modifier.clickable { onClick() }
+            } else {
+                Modifier
+            }
+        )
     ) {
         // Simple placeholder for now - images don't persist locally
         androidx.compose.foundation.Image(

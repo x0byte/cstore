@@ -42,6 +42,30 @@ class ListingRepository(
             Result.failure(e)
         }
     }
+
+    suspend fun getListingById(listingId: String): Result<Listing?> {
+        return try {
+            val snapshot = listings.document(listingId).get().await()
+            if (snapshot.exists()) {
+                val listing = snapshot.toObject(Listing::class.java)
+                Result.success(listing)
+            } else {
+                Result.success(null)
+            }
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    suspend fun getListingsByUserId(userId: String): Result<List<Listing>> {
+        return try {
+            val snapshot = listings.whereEqualTo("userId", userId).get().await()
+            val list = snapshot.toObjects(Listing::class.java)
+            Result.success(list)
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
 }
 
 
