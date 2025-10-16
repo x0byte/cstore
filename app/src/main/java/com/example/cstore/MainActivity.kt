@@ -165,11 +165,23 @@ fun App() {
                 )
             }
         }
-        composable("chat") {
-            Scaffold(bottomBar = { BottomNavBar(navController) }) { innerPadding ->
-                ChatScreen(modifier = Modifier.padding(innerPadding))
-            }
+        //composable("chat") {
+        //    Scaffold(bottomBar = { BottomNavBar(navController) }) { innerPadding ->
+        //       ChatScreen(modifier = Modifier.padding(innerPadding))
+        //}
+
+        composable(
+            "chat/{otherUserId}",
+            arguments = listOf(navArgument("otherUserId") { type = NavType.StringType })
+        ) { backStackEntry ->
+            val otherUserId = backStackEntry.arguments?.getString("otherUserId") ?: return@composable
+            ChatScreen(
+                authViewModel = viewModel,  // reuse your AuthViewModel
+                otherUserId = otherUserId
+            )
         }
+
+
 
         composable(
             "item_detail/{listingId}",
@@ -183,7 +195,9 @@ fun App() {
                 viewModel = itemDetailViewModel,
                 onBack = { navController.popBackStack() },
                 onRequestItem = { /* Handle request item */ },
-                onChatWithOwner = { /* Handle chat */ },
+                onChatWithOwner = { ownerId ->
+                    navController.navigate("chat/$ownerId")
+                },
                 onShareItem = { /* Handle share */ }
             )
         }

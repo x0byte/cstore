@@ -16,17 +16,24 @@ class ChatViewModel(
     private val _messages = MutableStateFlow<List<ChatMessage>>(emptyList())
     val messages: StateFlow<List<ChatMessage>> = _messages
 
-    init {
+    private var currentUserId: String? = null
+    private var otherUserId: String? = null
+
+    fun loadConversation(currentUser: String, otherUser: String) {
+        currentUserId = currentUser
+        otherUserId = otherUser
+
         viewModelScope.launch {
-            repository.getMessages().collectLatest { list ->
-                _messages.value = list
-            }
+            repository.getMessagesForConversation(currentUser, otherUser)
+                .collectLatest { list -> _messages.value = list }
         }
     }
 
-    fun sendMessage(sender: String, text: String) {
+    fun sendMessage(text: String) {
+        val sender = currentUserId ?: return
+        val receiver = otherUserId ?: return
         viewModelScope.launch {
-            repository.sendMessage(sender, text)
+            repository.sendMessage(sender, receiver, text)
         }
     }
 }

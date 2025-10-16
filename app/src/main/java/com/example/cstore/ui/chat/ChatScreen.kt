@@ -19,26 +19,28 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.res.stringResource
 import com.example.cstore.R
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.example.cstore.ui.auth.AuthViewModel
 
-data class ChatMessage(
-    val id: String,
-    val sender: String,
-    val text: String,
-    val isUser: Boolean
-)
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun ChatScreen(modifier: Modifier = Modifier, viewModel: ChatViewModel = viewModel()
+fun ChatScreen(modifier: Modifier = Modifier,
+               chatViewModel: ChatViewModel = viewModel(),
+               authViewModel: AuthViewModel = viewModel(),
+               otherUserId: String
 ) {
-    val messages = viewModel.messages.collectAsState()
-
+    val currentUserId = authViewModel.currentUserUid() ?: return
+    val messages by chatViewModel.messages.collectAsState()
     var inputText by remember { mutableStateOf(TextFieldValue("")) }
+
+    LaunchedEffect(otherUserId) {
+        chatViewModel.loadConversation(currentUserId, otherUserId)
+    }
 
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Conversations") }
+                title = { Text("$otherUserId") }
             )
         },
         bottomBar = {
@@ -47,7 +49,7 @@ fun ChatScreen(modifier: Modifier = Modifier, viewModel: ChatViewModel = viewMod
                 onTextChange = { inputText = it },
                 onSendClick = {
                     if (inputText.text.isNotBlank()) {
-                        viewModel.sendMessage("You", inputText.text)
+                        chatViewModel.sendMessage(inputText.text)
                         inputText = TextFieldValue("")
                     }
                 }
@@ -56,7 +58,8 @@ fun ChatScreen(modifier: Modifier = Modifier, viewModel: ChatViewModel = viewMod
         modifier = modifier
     ) { innerPadding ->
         ChatMessagesList(
-            messages = messages.value,
+            messages = messages,
+            currentUserId = currentUserId,
             modifier = Modifier
                 .padding(innerPadding)
                 .fillMaxSize()
@@ -66,17 +69,17 @@ fun ChatScreen(modifier: Modifier = Modifier, viewModel: ChatViewModel = viewMod
 }
 
 @Composable
-fun ChatMessagesList(messages: List<com.example.cstore.data.chat.ChatMessage>, modifier: Modifier = Modifier) {
+fun ChatMessagesList(messages: List<com.example.cstore.data.chat.ChatMessage>, currentUserId: String, modifier: Modifier = Modifier) {
     LazyColumn(
         modifier = modifier,
         contentPadding = PaddingValues(8.dp),
         verticalArrangement = Arrangement.spacedBy(8.dp),
         reverseLayout = true // To show the latest message at the bottom
     ) {
-        items(messages.reversed()) { message ->
+        items(messages) { message ->
             ChatBubble(
                 text = message.text,
-                isUser = message.sender == "You"
+                isUser = message.senderId == currentUserId
             )
         }
     }
