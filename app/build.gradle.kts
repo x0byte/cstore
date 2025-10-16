@@ -64,6 +64,7 @@ dependencies {
     implementation(libs.gson)
     implementation(libs.google.maps)
     implementation(libs.maps.compose)
+    implementation("com.google.firebase:firebase-firestore-ktx:25.1.0")
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)

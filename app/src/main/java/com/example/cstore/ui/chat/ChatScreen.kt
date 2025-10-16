@@ -18,6 +18,7 @@ import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.res.stringResource
 import com.example.cstore.R
+import androidx.lifecycle.viewmodel.compose.viewModel
 
 data class ChatMessage(
     val id: String,
@@ -28,14 +29,9 @@ data class ChatMessage(
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun ChatScreen(modifier: Modifier = Modifier) {
-    var messages by remember {
-        mutableStateOf(
-            listOf(
-                ChatMessage("1", "Test", "Hey there!", false)
-            )
-        )
-    }
+fun ChatScreen(modifier: Modifier = Modifier, viewModel: ChatViewModel = viewModel()
+) {
+    val messages = viewModel.messages.collectAsState()
 
     var inputText by remember { mutableStateOf(TextFieldValue("")) }
 
@@ -51,12 +47,7 @@ fun ChatScreen(modifier: Modifier = Modifier) {
                 onTextChange = { inputText = it },
                 onSendClick = {
                     if (inputText.text.isNotBlank()) {
-                        messages = messages + ChatMessage(
-                            id = (messages.size + 1).toString(),
-                            sender = "You",
-                            text = inputText.text,
-                            isUser = true
-                        )
+                        viewModel.sendMessage("You", inputText.text)
                         inputText = TextFieldValue("")
                     }
                 }
@@ -65,7 +56,7 @@ fun ChatScreen(modifier: Modifier = Modifier) {
         modifier = modifier
     ) { innerPadding ->
         ChatMessagesList(
-            messages = messages,
+            messages = messages.value,
             modifier = Modifier
                 .padding(innerPadding)
                 .fillMaxSize()
@@ -75,7 +66,7 @@ fun ChatScreen(modifier: Modifier = Modifier) {
 }
 
 @Composable
-fun ChatMessagesList(messages: List<ChatMessage>, modifier: Modifier = Modifier) {
+fun ChatMessagesList(messages: List<com.example.cstore.data.chat.ChatMessage>, modifier: Modifier = Modifier) {
     LazyColumn(
         modifier = modifier,
         contentPadding = PaddingValues(8.dp),
@@ -83,18 +74,21 @@ fun ChatMessagesList(messages: List<ChatMessage>, modifier: Modifier = Modifier)
         reverseLayout = true // To show the latest message at the bottom
     ) {
         items(messages.reversed()) { message ->
-            ChatBubble(message = message)
+            ChatBubble(
+                text = message.text,
+                isUser = message.sender == "You"
+            )
         }
     }
 }
 
 @Composable
-fun ChatBubble(message: ChatMessage) {
+fun ChatBubble(text: String, isUser: Boolean) {
     val bubbleColor =
-        if (message.isUser) MaterialTheme.colorScheme.primaryContainer
+        if (isUser) MaterialTheme.colorScheme.primaryContainer
         else MaterialTheme.colorScheme.surfaceVariant
     val alignment =
-        if (message.isUser) Alignment.CenterEnd else Alignment.CenterStart
+        if (isUser) Alignment.CenterEnd else Alignment.CenterStart
 
     Box(
         modifier = Modifier.fillMaxWidth(),
@@ -109,9 +103,9 @@ fun ChatBubble(message: ChatMessage) {
                 .padding(horizontal = 4.dp)
         ) {
             Text(
-                text = message.text,
+                text = text,
                 style = MaterialTheme.typography.bodyMedium,
-                color = if (message.isUser)
+                color = if (isUser)
                     MaterialTheme.colorScheme.onPrimaryContainer
                 else
                     MaterialTheme.colorScheme.onSurfaceVariant,
