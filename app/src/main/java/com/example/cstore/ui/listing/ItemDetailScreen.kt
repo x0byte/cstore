@@ -210,7 +210,7 @@ fun ItemImageCard(listing: Listing) {
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
     ) {
         AsyncImage(
-            model = listing.localImageUri?.takeIf { it.isNotBlank() },
+            model = (listing.imageUrl?.takeIf { it.isNotBlank() }) ?: listing.localImageUri?.takeIf { it.isNotBlank() },
             contentDescription = listing.title,
             modifier = Modifier
                 .fillMaxWidth()

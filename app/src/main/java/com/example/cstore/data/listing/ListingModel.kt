@@ -8,6 +8,7 @@ data class Listing(
     val price: Double? = null,
     val isDonation: Boolean = false,
     val localImageUri: String? = null,
+    val imageUrl: String? = null,
     val userId: String = "",
     val locationName: String = "",
     val latitude: Double? = null,

@@ -1,16 +1,29 @@
 package com.example.cstore.data.listing
 
+import android.net.Uri
 import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.storage.FirebaseStorage
 import kotlinx.coroutines.tasks.await
 
 class ListingRepository(
-    private val firestore: FirebaseFirestore = FirebaseFirestore.getInstance()
+    private val firestore: FirebaseFirestore = FirebaseFirestore.getInstance(),
+    private val storage: FirebaseStorage = FirebaseStorage.getInstance()
 ) {
     private val listings = firestore.collection("listings")
 
     suspend fun uploadListing(listing: Listing): Result<Unit> {
         return try {
             val docRef = if (listing.id.isBlank()) listings.document() else listings.document(listing.id)
+
+            // Upload image to Firebase Storage if provided, and capture download URL
+            val downloadUrl: String? = listing.localImageUri?.let { uriString ->
+                val fileUri = Uri.parse(uriString)
+                val path = "listings/${docRef.id}.jpg"
+                val ref = storage.reference.child(path)
+                ref.putFile(fileUri).await()
+                ref.downloadUrl.await().toString()
+            }
+
             val data = mapOf(
                 "id" to docRef.id,
                 "title" to listing.title,
@@ -18,7 +31,8 @@ class ListingRepository(
                 "category" to listing.category,
                 "price" to listing.price,
                 "isDonation" to listing.isDonation,
-                "localImageUri" to listing.localImageUri,
+                "localImageUri" to null, // do not persist local cache URI
+                "imageUrl" to downloadUrl,
                 "userId" to listing.userId,
                 "locationName" to listing.locationName,
                 "latitude" to listing.latitude,
