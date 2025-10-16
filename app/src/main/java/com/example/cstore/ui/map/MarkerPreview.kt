@@ -59,7 +59,7 @@ fun MarkerPreview(
                 contentAlignment = Alignment.Center
             ) {
                 AsyncImage(
-                    model = listing.localImageUri,
+                    model = listing.imageUrl?.takeIf { it.isNotBlank() } ?: listing.localImageUri,
                     contentDescription = listing.title,
                     modifier = Modifier.size(60.dp),
                     contentScale = ContentScale.Crop,

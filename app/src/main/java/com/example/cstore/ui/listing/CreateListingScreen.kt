@@ -318,6 +318,7 @@ fun CreateListingScreen(
                         price = priceText.toDoubleOrNull(),
                         isDonation = isDonation,
                         localImageUri = imageUri?.toString(),
+                        imageUrl = null,
                         userId = viewModel.currentUserUid() ?: "",
                         locationName = locationName.trim(),
                         latitude = latitude,

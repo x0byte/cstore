@@ -53,6 +53,7 @@ dependencies {
     implementation(platform(libs.firebase.bom))
     implementation(libs.firebase.auth.ktx)
     implementation(libs.firebase.firestore.ktx)
+    implementation(libs.firebase.storage.ktx)
     implementation(libs.google.play.services.auth)
     implementation(libs.kotlinx.coroutines.play.services)
     implementation(libs.androidx.navigation.compose)

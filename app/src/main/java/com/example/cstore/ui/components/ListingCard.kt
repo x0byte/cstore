@@ -18,6 +18,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
+import androidx.compose.ui.res.painterResource
 import com.example.cstore.data.listing.Listing
 
 @Composable
@@ -37,14 +38,17 @@ fun ListingCard(
             }
         )
     ) {
-        // Simple placeholder for now - images don't persist locally
-        androidx.compose.foundation.Image(
-            painter = androidx.compose.ui.res.painterResource(android.R.drawable.ic_menu_gallery),
+        // Try to load remote imageUrl, fallback to localImageUri, then placeholder
+        AsyncImage(
+            model = listing.imageUrl?.takeIf { it.isNotBlank() } ?: listing.localImageUri,
             contentDescription = "Item image",
             modifier = Modifier
                 .fillMaxWidth()
                 .height(150.dp)
-                .clip(RoundedCornerShape(topStart = 16.dp, topEnd = 16.dp))
+                .clip(RoundedCornerShape(topStart = 16.dp, topEnd = 16.dp)),
+            contentScale = ContentScale.Crop,
+            error = painterResource(android.R.drawable.ic_menu_gallery),
+            placeholder = painterResource(android.R.drawable.ic_menu_gallery)
         )
         Column(modifier = Modifier.padding(12.dp)) {
             Text(
