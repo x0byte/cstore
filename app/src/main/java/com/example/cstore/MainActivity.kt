@@ -37,6 +37,7 @@ import com.example.cstore.ui.listing.ItemDetailScreen
 import com.example.cstore.ui.listing.ItemDetailViewModel
 import com.example.cstore.ui.map.MapScreen
 import com.example.cstore.ui.navigation.BottomNavBar
+import com.example.cstore.ui.chat.ChatScreen // Add chat
 import com.google.android.gms.auth.api.signin.GoogleSignIn
 import com.google.android.gms.auth.api.signin.GoogleSignInOptions
 import com.google.android.gms.common.api.ApiException
@@ -164,6 +165,12 @@ fun App() {
                 )
             }
         }
+        composable("chat") {
+            Scaffold(bottomBar = { BottomNavBar(navController) }) { innerPadding ->
+                ChatScreen(modifier = Modifier.padding(innerPadding))
+            }
+        }
+
         composable(
             "item_detail/{listingId}",
             arguments = listOf(navArgument("listingId") { type = NavType.StringType })
