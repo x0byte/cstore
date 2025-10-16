@@ -42,6 +42,8 @@ import com.google.android.gms.auth.api.signin.GoogleSignIn
 import com.google.android.gms.auth.api.signin.GoogleSignInOptions
 import com.google.android.gms.common.api.ApiException
 import com.google.android.gms.tasks.Task
+import com.example.cstore.ui.chat.ChatListScreen
+
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -180,6 +182,15 @@ fun App() {
                 otherUserId = otherUserId
             )
         }
+
+        composable("chats") {
+            ChatListScreen(
+                onChatSelected = { otherUserId ->
+                    navController.navigate("chat/$otherUserId")
+                }
+            )
+        }
+
 
 
 

@@ -1,7 +1,9 @@
 package com.example.cstore.data.chat
 
 import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.firestore.FirebaseFirestoreException
 import com.google.firebase.firestore.Query
+import com.google.firebase.firestore.QuerySnapshot
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.tasks.await
@@ -14,11 +16,32 @@ data class ChatMessage(
     val timestamp: Long = System.currentTimeMillis()
 )
 
+data class ChatSummary(
+    val participants: List<String> = emptyList(),
+    val lastMessage: String = "",
+    val lastTimestamp: Long = 0
+)
 class ChatRepository(
     private val db: FirebaseFirestore = FirebaseFirestore.getInstance()
 ) {
     private fun getConversationId(userA: String, userB: String): String {
         return if (userA < userB) "${userA}_${userB}" else "${userB}_${userA}"
+    }
+
+    fun getChatList(currentUserId: String) = callbackFlow {
+        val listener = db.collection("chats")
+            .whereArrayContains("participants", currentUserId)
+            .orderBy("lastTimestamp", Query.Direction.DESCENDING)
+            .addSnapshotListener { snapshot: QuerySnapshot?, error: FirebaseFirestoreException? ->
+                if (error != null) {
+                    close(error)
+                    return@addSnapshotListener
+                }
+                val chats = snapshot?.toObjects(ChatSummary::class.java).orEmpty()
+                trySend(chats)
+            }
+
+        awaitClose { listener.remove() }
     }
 
     fun getMessagesForConversation(userA: String, userB: String) = callbackFlow {
@@ -41,9 +64,8 @@ class ChatRepository(
 
     suspend fun sendMessage(senderId: String, receiverId: String, text: String) {
         val conversationId = getConversationId(senderId, receiverId)
-        val messagesRef = db.collection("chats")
-            .document(conversationId)
-            .collection("messages")
+        val chatRef = db.collection("chats").document(conversationId)
+        val messagesRef = chatRef.collection("messages")
 
         val newMsg = ChatMessage(
             id = messagesRef.document().id,
@@ -53,5 +75,13 @@ class ChatRepository(
             timestamp = System.currentTimeMillis()
         )
         messagesRef.document(newMsg.id).set(newMsg).await()
+        // Update chat summary
+        val participants = listOf(senderId, receiverId)
+        val summary = mapOf(
+            "participants" to participants,
+            "lastMessage" to text,
+            "lastTimestamp" to newMsg.timestamp
+        )
+        chatRef.set(summary, com.google.firebase.firestore.SetOptions.merge()).await()
     }
 }
