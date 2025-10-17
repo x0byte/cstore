@@ -126,6 +126,7 @@ fun App() {
                     onCreateListing = { navController.navigate("create_listing") },
                     onProfile = { navController.navigate("profile") },
                     onItemClick = { listingId -> navController.navigate("item_detail/$listingId") },
+                    onChats = { navController.navigate("chats") },
                     modifier = Modifier.padding(innerPadding)
                 )
             }
