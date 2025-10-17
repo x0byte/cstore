@@ -33,6 +33,7 @@ import com.example.cstore.ui.listing.ItemDetailScreen
 import com.example.cstore.ui.listing.ItemDetailViewModel
 import com.example.cstore.ui.map.MapScreen
 import com.example.cstore.ui.navigation.BottomNavBar
+import com.example.cstore.ui.chat.ChatScreen // Add chat
 import com.example.cstore.ui.search.SearchScreen
 import com.example.cstore.ui.theme.CstoreTheme
 import androidx.compose.runtime.LaunchedEffect
@@ -41,6 +42,9 @@ import com.google.android.gms.auth.api.signin.GoogleSignIn
 import com.google.android.gms.auth.api.signin.GoogleSignInOptions
 import com.google.android.gms.common.api.ApiException
 import com.google.android.gms.tasks.Task
+import com.example.cstore.ui.chat.ChatListScreen
+import android.net.Uri
+
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -137,6 +141,7 @@ fun App() {
                     onCreateListing = { navController.navigate("create_listing") },
                     onProfile = { navController.navigate("profile") },
                     onItemClick = { listingId -> navController.navigate("item_detail/$listingId") },
+                    onChats = { navController.navigate("chats") },
                     modifier = Modifier.padding(innerPadding)
                 )
             }
@@ -185,6 +190,49 @@ fun App() {
                 )
             }
         }
+        //composable("chat") {
+        //    Scaffold(bottomBar = { BottomNavBar(navController) }) { innerPadding ->
+        //       ChatScreen(modifier = Modifier.padding(innerPadding))
+        //}
+
+        composable(
+            "chat/{otherUserId}/{otherEmail}",
+            arguments = listOf(navArgument("otherUserId") { type = NavType.StringType },
+                navArgument("otherEmail")  { type = NavType.StringType })
+        ) { backStackEntry ->
+            val otherUserId = backStackEntry.arguments?.getString("otherUserId") ?: return@composable
+            val otherEmail  = backStackEntry.arguments?.getString("otherEmail")  ?: ""
+            ChatScreen(
+                authViewModel = viewModel,  // reuse your AuthViewModel
+                otherUserId = otherUserId
+            )
+        }
+
+        composable(
+            "chat/{otherUserId}",
+            arguments = listOf(
+                navArgument("otherUserId") { type = NavType.StringType }
+            )
+        ) { backStackEntry ->
+            val otherUserId = backStackEntry.arguments?.getString("otherUserId") ?: return@composable
+            ChatScreen(
+                authViewModel = viewModel,
+                otherUserId = otherUserId
+            )
+        }
+
+        composable("chats") {
+                ChatListScreen(
+                    onChatSelected = { otherUserId, otherEmail ->
+                        val id   = Uri.encode(otherUserId)
+                        val mail = Uri.encode(otherEmail)
+                        navController.navigate("chat/$id/$mail")
+                    }
+                )
+        }
+
+
+
 
         composable(
             "item_detail/{listingId}",
@@ -197,9 +245,11 @@ fun App() {
                 listingId = listingId,
                 viewModel = itemDetailViewModel,
                 onBack = { navController.popBackStack() },
-                onRequestItem = { /* TODO */ },
-                onChatWithOwner = { /* TODO */ },
-                onShareItem = { /* TODO */ }
+                onRequestItem = { /* Handle request item */ },
+                onChatWithOwner = { ownerId ->
+                    navController.navigate("chat/$ownerId")
+                },
+                onShareItem = { /* Handle share */ }
             )
         }
 
