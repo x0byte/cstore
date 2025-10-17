@@ -20,6 +20,7 @@ retrofit = "2.9.0"
 gson = "2.10.1"
 google-maps = "18.2.0"
 maps-compose = "4.3.3"
+workManager = "2.9.0"
 mlkit-text-recognition = "16.0.1"
 
 [libraries]
@@ -52,6 +53,7 @@ retrofit-gson = { group = "com.squareup.retrofit2", name = "converter-gson", ver
 gson = { group = "com.google.code.gson", name = "gson", version.ref = "gson" }
 google-maps = { group = "com.google.android.gms", name = "play-services-maps", version.ref = "google-maps" }
 maps-compose = { group = "com.google.maps.android", name = "maps-compose", version.ref = "maps-compose" }
+androidx-work-runtime-ktx = { group = "androidx.work", name = "work-runtime-ktx", version.ref = "workManager" }
 mlkit-text-recognition = { group = "com.google.mlkit", name = "text-recognition", version.ref = "mlkit-text-recognition" }
 
 [plugins]

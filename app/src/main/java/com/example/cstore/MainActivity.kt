@@ -36,8 +36,13 @@ import com.example.cstore.ui.navigation.BottomNavBar
 import com.example.cstore.ui.search.SearchScreen
 import com.example.cstore.ui.theme.CstoreTheme
 import androidx.compose.runtime.LaunchedEffect
+import androidx.work.ExistingPeriodicWorkPolicy
+import androidx.work.PeriodicWorkRequestBuilder
+import androidx.work.WorkManager
 import com.example.cstore.data.events.EventRepository
+import com.example.cstore.workers.EventRefreshWorker
 import com.google.android.gms.auth.api.signin.GoogleSignIn
+import java.util.concurrent.TimeUnit
 import com.google.android.gms.auth.api.signin.GoogleSignInOptions
 import com.google.android.gms.common.api.ApiException
 import com.google.android.gms.tasks.Task
@@ -46,7 +51,24 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
+        
+        // Schedule periodic event refresh worker (runs every 6 hours)
+        scheduleEventRefresh()
+        
         setContent { CstoreTheme { App() } }
+    }
+    
+    private fun scheduleEventRefresh() {
+        val workRequest = PeriodicWorkRequestBuilder<EventRefreshWorker>(
+            repeatInterval = 6,
+            repeatIntervalTimeUnit = TimeUnit.HOURS
+        ).build()
+        
+        WorkManager.getInstance(this).enqueueUniquePeriodicWork(
+            "event_refresh",
+            ExistingPeriodicWorkPolicy.KEEP,
+            workRequest
+        )
     }
 }
 
