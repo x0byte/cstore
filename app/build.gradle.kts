@@ -66,6 +66,7 @@ dependencies {
     implementation(libs.google.maps)
     implementation(libs.maps.compose)
     implementation(libs.androidx.work.runtime.ktx)
+    implementation(libs.mlkit.text.recognition)
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)

@@ -1,5 +1,6 @@
 package com.example.cstore.data.auth
 
+import android.util.Log
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.GoogleAuthProvider
 import kotlinx.coroutines.tasks.await
@@ -66,8 +67,10 @@ class AuthRepository(
     suspend fun sendPasswordResetEmail(email: String): Result<Unit> {
         return try {
             firebaseAuth.sendPasswordResetEmail(email).await()
+            Log.d("AuthReset", "Reset email sent to: $email")
             Result.success(Unit)
         } catch (e: Exception) {
+            Log.e("AuthReset", "Reset failed: ${e.message}", e)
             Result.failure(e)
         }
     }

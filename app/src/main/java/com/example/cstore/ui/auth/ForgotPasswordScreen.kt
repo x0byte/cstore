@@ -3,13 +3,13 @@ package com.example.cstore.ui.auth
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.launch
+import androidx.compose.runtime.rememberCoroutineScope
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -126,10 +126,12 @@ fun ForgotPasswordScreen(
                             val result = viewModel.sendPasswordResetEmail(email.trim())
                             isLoading = false
                             if (result.isSuccess) {
+                                android.util.Log.d("AuthReset", "Reset email sent to: ${email.trim()}")
                                 emailSent = true
                             } else {
-                                errorMessage = result.exceptionOrNull()?.message
-                                    ?: "Failed to send email. Please try again."
+                                val msg = result.exceptionOrNull()?.message ?: "Failed to send email. Please try again."
+                                android.util.Log.e("AuthReset", msg, result.exceptionOrNull())
+                                errorMessage = msg
                             }
                         }
                     },
