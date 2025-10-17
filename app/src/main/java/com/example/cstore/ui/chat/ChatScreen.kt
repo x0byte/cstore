@@ -166,6 +166,7 @@ fun ChatMessagesList(messages: List<com.example.cstore.data.chat.ChatMessage>, c
         items(messages) { message ->
             ChatBubble(
                 text = message.text,
+                timestamp = message.timestamp,
                 isUser = message.senderId == currentUserId
             )
         }
@@ -173,7 +174,7 @@ fun ChatMessagesList(messages: List<com.example.cstore.data.chat.ChatMessage>, c
 }
 
 @Composable
-fun ChatBubble(text: String, isUser: Boolean) {
+fun ChatBubble(text: String, timestamp: Long, isUser: Boolean) {
     val bubbleColor = if (isUser) {
         MaterialTheme.colorScheme.primary
     } else {
@@ -184,6 +185,12 @@ fun ChatBubble(text: String, isUser: Boolean) {
         MaterialTheme.colorScheme.onPrimary
     } else {
         MaterialTheme.colorScheme.onSurfaceVariant
+    }
+    
+    val timestampColor = if (isUser) {
+        MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.7f)
+    } else {
+        MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
     }
     
     val alignment = if (isUser) Alignment.CenterEnd else Alignment.CenterStart
@@ -203,6 +210,11 @@ fun ChatBubble(text: String, isUser: Boolean) {
             bottomEnd = 18.dp
         )
     }
+    
+    val timeText = remember(timestamp) {
+        val sdf = java.text.SimpleDateFormat("h:mm a", java.util.Locale.getDefault())
+        sdf.format(java.util.Date(timestamp))
+    }
 
     Box(
         modifier = Modifier.fillMaxWidth(),
@@ -215,12 +227,21 @@ fun ChatBubble(text: String, isUser: Boolean) {
                 .padding(4.dp)
                 .widthIn(max = 280.dp)
         ) {
-            Text(
-                text = text,
-                modifier = Modifier.padding(horizontal = 16.dp, vertical = 10.dp),
-                style = MaterialTheme.typography.bodyMedium,
-                color = textColor
-            )
+            Column(
+                modifier = Modifier.padding(horizontal = 16.dp, vertical = 10.dp)
+            ) {
+                Text(
+                    text = text,
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = textColor
+                )
+                Spacer(modifier = Modifier.height(2.dp))
+                Text(
+                    text = timeText,
+                    style = MaterialTheme.typography.labelSmall,
+                    color = timestampColor
+                )
+            }
         }
     }
 }
