@@ -35,7 +35,8 @@ fun LoginScreen(
     onSignIn: (String, String) -> Unit,
     onSignUpNavigate: () -> Unit,
     onGoogleClick: () -> Unit,
-    onSuccess: () -> Unit
+    onSuccess: () -> Unit,
+    onForgotPassword: () -> Unit = {}
 ) {
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
@@ -76,6 +77,14 @@ fun LoginScreen(
             }
             Text("Sign In")
         }
+
+        Spacer(Modifier.height(8.dp))
+        TextButton(onClick = onForgotPassword) {
+            Text("Forgot Password?")
+        }
+
+
+
         if (state is AuthUiState.Error) {
             Spacer(Modifier.height(8.dp))
             Text(state.message, color = MaterialTheme.colorScheme.error)
