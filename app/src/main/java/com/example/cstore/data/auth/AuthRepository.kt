@@ -1,5 +1,6 @@
 package com.example.cstore.data.auth
 
+import android.util.Log
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.GoogleAuthProvider
 import kotlinx.coroutines.tasks.await
@@ -42,6 +43,35 @@ class AuthRepository(
     fun getCurrentUserEmail(): String? = firebaseAuth.currentUser?.email
 
     fun getCurrentUserUid(): String? = firebaseAuth.currentUser?.uid
+
+
+
+    suspend fun sendEmailVerification(): Result<Unit> {
+        return try {
+            val user = firebaseAuth.currentUser
+            if (user != null) {
+                user.sendEmailVerification().await()
+                Result.success(Unit)
+            } else {
+                Result.failure(Exception("No user logged in"))
+            }
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    fun isEmailVerified(): Boolean {
+        return firebaseAuth.currentUser?.isEmailVerified ?: false
+    }
+
+    suspend fun sendPasswordResetEmail(email: String): Result<Unit> {
+        return try {
+            firebaseAuth.sendPasswordResetEmail(email).await()
+            Log.d("AuthReset", "Reset email sent to: $email")
+            Result.success(Unit)
+        } catch (e: Exception) {
+            Log.e("AuthReset", "Reset failed: ${e.message}", e)
+            Result.failure(e)
+        }
+    }
 }
-
-

@@ -1,5 +1,6 @@
 package com.example.cstore.ui.auth
 
+import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.cstore.data.auth.AuthRepository
@@ -53,23 +54,39 @@ class AuthViewModel(
         }
     }
 
-    fun signIn(email: String, password: String) {
-        val validationError = validateBasic(email, password)
-        if (validationError != null) {
-            _uiState.value = AuthUiState.Error(validationError)
+    fun signIn(email: String, password: String, rememberMe: Boolean, context: Context?) {
+        val err = validateBasic(email, password)
+        if (err != null) {
+            _uiState.value = AuthUiState.Error(err)
             return
         }
         _uiState.value = AuthUiState.Loading
+
         viewModelScope.launch {
-            val result = repository.signInWithEmail(email.trim(), password)
-            result.onSuccess { uid ->
-                loadUserProfile(uid)
-                _uiState.value = AuthUiState.Success(uid)
-            }.onFailure { e ->
-                _uiState.value = AuthUiState.Error(e.message ?: "Sign in failed")
-            }
+            repository.signInWithEmail(email.trim(), password)
+                .onSuccess { uid ->
+
+                    loadUserProfile(uid)
+
+                    context?.getSharedPreferences("auth", Context.MODE_PRIVATE)
+                        ?.edit()?.apply {
+                            if (rememberMe) {
+                                putString("saved_email", email.trim())
+                                putBoolean("remember_me", true)
+                            } else {
+                                clear()
+                            }
+                            apply()
+                        }
+
+                    _uiState.value = AuthUiState.Success(uid)
+                }
+                .onFailure { e ->
+                    _uiState.value = AuthUiState.Error(e.message ?: "Sign in failed")
+                }
         }
     }
+
 
     fun signInWithGoogle(idToken: String) {
         _uiState.value = AuthUiState.Loading
@@ -140,6 +157,10 @@ class AuthViewModel(
                 _uiState.value = AuthUiState.Error(e.message ?: "Failed to load profile")
             }
         }
+    }
+
+    suspend fun sendPasswordResetEmail(email: String): Result<Unit> {
+        return repository.sendPasswordResetEmail(email)
     }
 }
 

@@ -3,6 +3,7 @@ package com.example.cstore.ui.auth
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
@@ -15,6 +16,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
+import androidx.compose.material3.Checkbox
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -24,6 +26,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
@@ -32,14 +35,29 @@ import androidx.compose.ui.unit.dp
 @Composable
 fun LoginScreen(
     state: AuthUiState,
-    onSignIn: (String, String) -> Unit,
+    onSignIn: (String, String, Boolean) -> Unit,
     onSignUpNavigate: () -> Unit,
     onGoogleClick: () -> Unit,
-    onSuccess: () -> Unit
+    onSuccess: () -> Unit,
+    onForgotPassword: () -> Unit = {}
 ) {
+    val context = LocalContext.current
+
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
     var showPassword by remember { mutableStateOf(false) }
+    var rememberMe by remember { mutableStateOf(false) }
+
+
+    LaunchedEffect(Unit) {
+        val prefs = context.getSharedPreferences("auth", android.content.Context.MODE_PRIVATE)
+        val savedRemember = prefs.getBoolean("remember_me", false)
+        val savedEmail = prefs.getString("saved_email", "") ?: ""
+        if (savedRemember && savedEmail.isNotEmpty()) {
+            rememberMe = true
+            email = savedEmail
+        }
+    }
 
     LaunchedEffect(state) {
         if (state is AuthUiState.Success) onSuccess()
@@ -54,13 +72,16 @@ fun LoginScreen(
     ) {
         Text("Welcome back", style = MaterialTheme.typography.headlineMedium)
         Spacer(Modifier.height(20.dp))
+
         OutlinedTextField(
             value = email,
             onValueChange = { email = it },
             label = { Text("Email") },
             singleLine = true
         )
+
         Spacer(Modifier.height(12.dp))
+
         OutlinedTextField(
             value = password,
             onValueChange = { password = it },
@@ -68,22 +89,41 @@ fun LoginScreen(
             singleLine = true,
             visualTransformation = if (showPassword) VisualTransformation.None else PasswordVisualTransformation()
         )
+
+        Spacer(Modifier.height(12.dp))
+
+
+        Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.align(Alignment.Start)) {
+            Checkbox(checked = rememberMe, onCheckedChange = { rememberMe = it })
+            Spacer(Modifier.width(8.dp))
+            Text("Remember Me", style = MaterialTheme.typography.bodyMedium)
+        }
+
         Spacer(Modifier.height(16.dp))
-        Button(onClick = { onSignIn(email, password) }, enabled = state !is AuthUiState.Loading) {
+
+
+        Button(onClick = { onSignIn(email, password, rememberMe) }, enabled = state !is AuthUiState.Loading) {
             if (state is AuthUiState.Loading) {
                 CircularProgressIndicator(modifier = Modifier.width(18.dp).height(18.dp))
                 Spacer(Modifier.width(8.dp))
             }
             Text("Sign In")
         }
+
+        Spacer(Modifier.height(8.dp))
+        TextButton(onClick = onForgotPassword) { Text("Forgot Password?") }
+
         if (state is AuthUiState.Error) {
             Spacer(Modifier.height(8.dp))
             Text(state.message, color = MaterialTheme.colorScheme.error)
         }
+
         Spacer(Modifier.height(16.dp))
         Divider()
         Spacer(Modifier.height(16.dp))
+
         GoogleButton(onClick = onGoogleClick)
+
         Spacer(Modifier.height(12.dp))
         TextButton(onClick = onSignUpNavigate) { Text("Don't have an account? Sign up") }
     }
@@ -103,5 +143,3 @@ private fun GoogleButton(onClick: () -> Unit) {
         Text("Sign in with Google")
     }
 }
-
-
