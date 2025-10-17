@@ -164,32 +164,52 @@ fun ChatMessagesList(messages: List<com.example.cstore.data.chat.ChatMessage>, c
 
 @Composable
 fun ChatBubble(text: String, isUser: Boolean) {
-    val bubbleColor =
-        if (isUser) MaterialTheme.colorScheme.primaryContainer
-        else MaterialTheme.colorScheme.surfaceVariant
-    val alignment =
-        if (isUser) Alignment.CenterEnd else Alignment.CenterStart
+    val bubbleColor = if (isUser) {
+        MaterialTheme.colorScheme.primary
+    } else {
+        MaterialTheme.colorScheme.surfaceVariant
+    }
+    
+    val textColor = if (isUser) {
+        MaterialTheme.colorScheme.onPrimary
+    } else {
+        MaterialTheme.colorScheme.onSurfaceVariant
+    }
+    
+    val alignment = if (isUser) Alignment.CenterEnd else Alignment.CenterStart
+    
+    val shape = if (isUser) {
+        RoundedCornerShape(
+            topStart = 18.dp,
+            topEnd = 18.dp,
+            bottomStart = 18.dp,
+            bottomEnd = 4.dp
+        )
+    } else {
+        RoundedCornerShape(
+            topStart = 18.dp,
+            topEnd = 18.dp,
+            bottomStart = 4.dp,
+            bottomEnd = 18.dp
+        )
+    }
 
     Box(
         modifier = Modifier.fillMaxWidth(),
         contentAlignment = alignment
     ) {
         Surface(
-            shape = RoundedCornerShape(16.dp),
             color = bubbleColor,
-            tonalElevation = 2.dp,
+            shape = shape,
             modifier = Modifier
+                .padding(4.dp)
                 .widthIn(max = 280.dp)
-                .padding(horizontal = 4.dp)
         ) {
             Text(
                 text = text,
+                modifier = Modifier.padding(horizontal = 16.dp, vertical = 10.dp),
                 style = MaterialTheme.typography.bodyMedium,
-                color = if (isUser)
-                    MaterialTheme.colorScheme.onPrimaryContainer
-                else
-                    MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier.padding(12.dp)
+                color = textColor
             )
         }
     }
