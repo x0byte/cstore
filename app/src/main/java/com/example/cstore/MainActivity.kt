@@ -186,6 +186,19 @@ fun App() {
             )
         }
 
+        composable(
+            "chat/{otherUserId}",
+            arguments = listOf(
+                navArgument("otherUserId") { type = NavType.StringType }
+            )
+        ) { backStackEntry ->
+            val otherUserId = backStackEntry.arguments?.getString("otherUserId") ?: return@composable
+            ChatScreen(
+                authViewModel = viewModel,
+                otherUserId = otherUserId
+            )
+        }
+
         composable("chats") {
                 ChatListScreen(
                     onChatSelected = { otherUserId, otherEmail ->
