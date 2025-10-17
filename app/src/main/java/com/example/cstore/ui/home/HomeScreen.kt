@@ -32,8 +32,9 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.example.cstore.ui.components.ListingCard
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Chat
+import androidx.compose.material.icons.filled.Email
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Email
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -45,7 +46,7 @@ fun HomeScreen(
     onCreateListing: () -> Unit,
     onProfile: () -> Unit,
     onItemClick: (String) -> Unit = {},
-    onChats: () -> Unit,                 // NEW
+    onChats: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     val state by viewModel.uiState.collectAsState()
@@ -55,7 +56,7 @@ fun HomeScreen(
     // Load listings when screen is first displayed
     LaunchedEffect(Unit) {
         viewModel.loadListings()
-        // Load weather for Melbourne as default (you can change this to user's location)
+        // Load weather for Melbourne as default
         viewModel.loadWeather(-37.8136, 144.9631, "dd6f05f68644e8fa202315bd4704d451")
     }
 
@@ -66,7 +67,7 @@ fun HomeScreen(
                     actions = {
                         // Chats
                         IconButton(onClick = onChats) {
-                            Icon(imageVector = Icons.Filled.Chat, contentDescription = "Chats")
+                            Icon(imageVector = Icons.Filled.Email, contentDescription = "Chats")
                         }
                         // Add listing
                         IconButton(onClick = onCreateListing) {

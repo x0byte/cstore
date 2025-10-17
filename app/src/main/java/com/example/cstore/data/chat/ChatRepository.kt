@@ -12,15 +12,15 @@ data class ChatMessage(
     val id: String = "",
     val senderId: String = "",
     val receiverId: String = "",
-    val senderEmail: String = "",     // NEW
-    val receiverEmail: String = "",   // NEW
+    val senderEmail: String = "",
+    val receiverEmail: String = "",
     val text: String = "",
     val timestamp: Long = System.currentTimeMillis()
 )
 
 data class ChatSummary(
     val participants: List<String> = emptyList(),
-    val participantEmails: List<String> = emptyList(),   // NEW (emails)
+    val participantEmails: List<String> = emptyList(),
     val lastMessage: String = "",
     val lastTimestamp: Long = 0
 )
@@ -76,8 +76,8 @@ class ChatRepository(
             id = messagesRef.document().id,
             senderId = senderId,
             receiverId = receiverId,
-            senderEmail = senderEmail,       // NEW
-            receiverEmail = receiverEmail,   // NEW
+            senderEmail = senderEmail,
+            receiverEmail = receiverEmail,
             text = text,
             timestamp = System.currentTimeMillis()
         )
@@ -85,7 +85,7 @@ class ChatRepository(
         // Update chat summary
         val summary = mapOf(
             "participants" to listOf(senderId, receiverId),
-            "participantEmails" to listOf(senderEmail, receiverEmail), // NEW
+            "participantEmails" to listOf(senderEmail, receiverEmail),
             "lastMessage" to text,
             "lastTimestamp" to newMsg.timestamp
         )
