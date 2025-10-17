@@ -6,6 +6,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Send
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.*
@@ -29,7 +30,8 @@ fun ChatScreen(
     chatViewModel: ChatViewModel = viewModel(),
     authViewModel: AuthViewModel = viewModel(),
     otherUserId: String,
-    listingId: String? = null
+    listingId: String? = null,
+    onBack: () -> Unit = {}
 ) {
     val currentUserId = authViewModel.currentUserUid() ?: return
     val currentUserEmail = authViewModel.currentUserEmail().orEmpty()
@@ -81,6 +83,14 @@ fun ChatScreen(
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
                         }
+                    }
+                },
+                navigationIcon = {
+                    IconButton(onClick = onBack) {
+                        Icon(
+                            imageVector = Icons.Default.ArrowBack,
+                            contentDescription = "Back"
+                        )
                     }
                 }
             )

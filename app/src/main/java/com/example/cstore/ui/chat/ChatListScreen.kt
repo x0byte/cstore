@@ -33,17 +33,43 @@ fun ChatListScreen(
     Scaffold(
         topBar = { TopAppBar(title = { Text("Chats") }) }
     ) { innerPadding ->
-        LazyColumn(
-            modifier = Modifier
-                .padding(innerPadding)
-                .fillMaxSize()
-                .padding(8.dp)
-        ) {
-            items(chatList) { chat ->
-                ChatListItem(chat = chat,
-                    currentUserId = currentUserId,
-                    currentUserEmail = currentUserEmail,
-                    onChatSelected = onChatSelected)
+        if (chatList.isEmpty()) {
+            // Empty state
+            Box(
+                modifier = Modifier
+                    .padding(innerPadding)
+                    .fillMaxSize(),
+                contentAlignment = Alignment.Center
+            ) {
+                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    Text(
+                        text = "No chats yet",
+                        style = MaterialTheme.typography.titleLarge,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Text(
+                        text = "Start chatting with sellers from item listings",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+            }
+        } else {
+            LazyColumn(
+                modifier = Modifier
+                    .padding(innerPadding)
+                    .fillMaxSize()
+                    .padding(8.dp)
+            ) {
+                items(chatList) { chat ->
+                    ChatListItem(
+                        chat = chat,
+                        currentUserId = currentUserId,
+                        currentUserEmail = currentUserEmail,
+                        onChatSelected = onChatSelected
+                    )
+                }
             }
         }
     }

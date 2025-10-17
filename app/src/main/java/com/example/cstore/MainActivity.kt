@@ -257,7 +257,8 @@ fun App() {
             ChatScreen(
                 authViewModel = authViewModel,
                 otherUserId = otherUserId,
-                listingId = listingId
+                listingId = listingId,
+                onBack = { navController.popBackStack() }
             )
         }
     }
