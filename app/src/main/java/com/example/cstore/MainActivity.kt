@@ -41,6 +41,7 @@ import com.google.android.gms.auth.api.signin.GoogleSignIn
 import com.google.android.gms.auth.api.signin.GoogleSignInOptions
 import com.google.android.gms.common.api.ApiException
 import com.google.android.gms.tasks.Task
+import com.example.cstore.ui.search.SearchScreen
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -126,6 +127,18 @@ fun App() {
                 )
             }
         }
+
+        composable("search") {
+            Scaffold(
+                bottomBar = { BottomNavBar(navController) }
+            ) { innerPadding ->
+                SearchScreen(
+                    onItemClick = { listingId -> navController.navigate("item_detail/$listingId") },
+                    modifier = Modifier.padding(innerPadding)
+                )
+            }
+        }
+
         composable("create_listing") {
             Scaffold(
                 bottomBar = { BottomNavBar(navController) }

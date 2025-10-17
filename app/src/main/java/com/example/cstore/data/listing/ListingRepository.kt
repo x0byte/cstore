@@ -2,6 +2,7 @@ package com.example.cstore.data.listing
 
 import android.net.Uri
 import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.firestore.Query
 import com.google.firebase.storage.FirebaseStorage
 import kotlinx.coroutines.tasks.await
 
@@ -80,6 +81,53 @@ class ListingRepository(
             Result.failure(e)
         }
     }
+
+
+    suspend fun searchListings(
+        query: String = "",
+        category: String? = null,
+        minPrice: Double? = null,
+        maxPrice: Double? = null
+    ): Result<List<Listing>> {
+        return try {
+            val snapshot = listings.get().await()
+            var list = snapshot.toObjects(Listing::class.java)
+
+            // Text search (case-insensitive)
+            if (query.isNotBlank()) {
+                val lowerQuery = query.lowercase()
+                list = list.filter {
+                    it.title.lowercase().contains(lowerQuery) ||
+                            it.description.lowercase().contains(lowerQuery)
+                }
+            }
+
+            // Filter by category
+            if (!category.isNullOrBlank() && category != "All") {
+                list = list.filter { it.category == category }
+            }
+
+            // Filter by price range
+            if (minPrice != null) {
+                list = list.filter { (it.price ?: 0.0) >= minPrice }
+            }
+
+            if (maxPrice != null) {
+                list = list.filter { (it.price ?: Double.MAX_VALUE) <= maxPrice }
+            }
+
+            Result.success(list)
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    fun sortListings(listings: List<Listing>, sortBy: String): List<Listing> {
+        return when (sortBy) {
+            "Price: Low to High" -> listings.sortedBy { it.price ?: 0.0 }
+            "Price: High to Low" -> listings.sortedByDescending { it.price ?: 0.0 }
+            "Most Recent" -> listings.sortedByDescending { it.createdAt }
+            else -> listings
+        }
+    }
 }
-
-

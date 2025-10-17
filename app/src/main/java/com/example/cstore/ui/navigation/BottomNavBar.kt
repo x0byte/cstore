@@ -11,10 +11,12 @@ import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.currentBackStackEntryAsState
 
+
 @Composable
 fun BottomNavBar(navController: NavHostController) {
     val items = listOf(
         BottomNavItem.Home,
+        BottomNavItem.Search,
         BottomNavItem.Add,
         BottomNavItem.Map,
         BottomNavItem.Profile
