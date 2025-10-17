@@ -54,7 +54,7 @@ class ChatRepository(
         val messagesRef = db.collection("chats")
             .document(conversationId)
             .collection("messages")
-            .orderBy("timestamp", Query.Direction.ASCENDING)
+            .orderBy("timestamp", Query.Direction.DESCENDING)
 
         val listener = messagesRef.addSnapshotListener { snapshot, error ->
             if (error != null) {
