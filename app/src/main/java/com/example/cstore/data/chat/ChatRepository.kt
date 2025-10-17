@@ -12,12 +12,15 @@ data class ChatMessage(
     val id: String = "",
     val senderId: String = "",
     val receiverId: String = "",
+    val senderEmail: String = "",     // NEW
+    val receiverEmail: String = "",   // NEW
     val text: String = "",
     val timestamp: Long = System.currentTimeMillis()
 )
 
 data class ChatSummary(
     val participants: List<String> = emptyList(),
+    val participantEmails: List<String> = emptyList(),   // NEW (emails)
     val lastMessage: String = "",
     val lastTimestamp: Long = 0
 )
@@ -62,7 +65,9 @@ class ChatRepository(
         awaitClose { listener.remove() }
     }
 
-    suspend fun sendMessage(senderId: String, receiverId: String, text: String) {
+    suspend fun sendMessage(senderId: String, senderEmail: String,
+                            receiverId: String, receiverEmail: String,
+                            text: String) {
         val conversationId = getConversationId(senderId, receiverId)
         val chatRef = db.collection("chats").document(conversationId)
         val messagesRef = chatRef.collection("messages")
@@ -71,14 +76,16 @@ class ChatRepository(
             id = messagesRef.document().id,
             senderId = senderId,
             receiverId = receiverId,
+            senderEmail = senderEmail,       // NEW
+            receiverEmail = receiverEmail,   // NEW
             text = text,
             timestamp = System.currentTimeMillis()
         )
         messagesRef.document(newMsg.id).set(newMsg).await()
         // Update chat summary
-        val participants = listOf(senderId, receiverId)
         val summary = mapOf(
-            "participants" to participants,
+            "participants" to listOf(senderId, receiverId),
+            "participantEmails" to listOf(senderEmail, receiverEmail), // NEW
             "lastMessage" to text,
             "lastTimestamp" to newMsg.timestamp
         )

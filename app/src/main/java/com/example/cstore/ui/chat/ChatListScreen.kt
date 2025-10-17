@@ -17,11 +17,12 @@ import java.util.*
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ChatListScreen(
-    onChatSelected: (String) -> Unit,
+    onChatSelected: (otherUserId: String, otherEmail: String) -> Unit, //add email
     authViewModel: AuthViewModel = viewModel(),
     chatListViewModel: ChatListViewModel = viewModel()
 ) {
     val currentUserId = authViewModel.currentUserUid() ?: return
+    val currentUserEmail = authViewModel.currentUserEmail().orEmpty()
     val chatList by chatListViewModel.chatList.collectAsState()
 
     LaunchedEffect(Unit) {
@@ -38,15 +39,20 @@ fun ChatListScreen(
                 .padding(8.dp)
         ) {
             items(chatList) { chat ->
-                ChatListItem(chat, currentUserId, onChatSelected)
+                ChatListItem(chat = chat,
+                    currentUserId = currentUserId,
+                    currentUserEmail = currentUserEmail,
+                    onChatSelected = onChatSelected)
             }
         }
     }
 }
 
 @Composable
-fun ChatListItem(chat: ChatSummary, currentUserId: String, onChatSelected: (String) -> Unit) {
+fun ChatListItem(chat: ChatSummary, currentUserId: String, currentUserEmail: String, onChatSelected: (String, String) -> Unit) {
     val otherUserId = chat.participants.firstOrNull { it != currentUserId } ?: "Unknown"
+    val otherEmail = chat.participantEmails.firstOrNull { it != currentUserEmail } ?: "Unknown"
+
     val formattedTime = remember(chat.lastTimestamp) {
         val sdf = SimpleDateFormat("MMM d, h:mm a", Locale.getDefault())
         sdf.format(Date(chat.lastTimestamp))
@@ -56,11 +62,11 @@ fun ChatListItem(chat: ChatSummary, currentUserId: String, onChatSelected: (Stri
         modifier = Modifier
             .fillMaxWidth()
             .padding(vertical = 4.dp)
-            .clickable { onChatSelected(otherUserId) },
+            .clickable { onChatSelected(otherUserId, otherEmail) },
         elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
     ) {
         Column(modifier = Modifier.padding(12.dp)) {
-            Text(text = "Chat with: $otherUserId", style = MaterialTheme.typography.titleMedium)
+            Text(text = "Chat with: $otherEmail", style = MaterialTheme.typography.titleMedium)
             Text(text = chat.lastMessage, style = MaterialTheme.typography.bodyMedium)
             Text(
                 text = formattedTime,

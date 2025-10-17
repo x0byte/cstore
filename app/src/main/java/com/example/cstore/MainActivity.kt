@@ -43,6 +43,7 @@ import com.google.android.gms.auth.api.signin.GoogleSignInOptions
 import com.google.android.gms.common.api.ApiException
 import com.google.android.gms.tasks.Task
 import com.example.cstore.ui.chat.ChatListScreen
+import android.net.Uri
 
 
 class MainActivity : ComponentActivity() {
@@ -173,10 +174,12 @@ fun App() {
         //}
 
         composable(
-            "chat/{otherUserId}",
-            arguments = listOf(navArgument("otherUserId") { type = NavType.StringType })
+            "chat/{otherUserId}/{otherEmail}",
+            arguments = listOf(navArgument("otherUserId") { type = NavType.StringType },
+                navArgument("otherEmail")  { type = NavType.StringType })
         ) { backStackEntry ->
             val otherUserId = backStackEntry.arguments?.getString("otherUserId") ?: return@composable
+            val otherEmail  = backStackEntry.arguments?.getString("otherEmail")  ?: ""
             ChatScreen(
                 authViewModel = viewModel,  // reuse your AuthViewModel
                 otherUserId = otherUserId
@@ -184,11 +187,13 @@ fun App() {
         }
 
         composable("chats") {
-            ChatListScreen(
-                onChatSelected = { otherUserId ->
-                    navController.navigate("chat/$otherUserId")
-                }
-            )
+                ChatListScreen(
+                    onChatSelected = { otherUserId, otherEmail ->
+                        val id   = Uri.encode(otherUserId)
+                        val mail = Uri.encode(otherEmail)
+                        navController.navigate("chat/$id/$mail")
+                    }
+                )
         }
 
 

@@ -20,7 +20,7 @@ import androidx.compose.ui.res.stringResource
 import com.example.cstore.R
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.cstore.ui.auth.AuthViewModel
-
+import kotlinx.coroutines.tasks.await
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -30,17 +30,29 @@ fun ChatScreen(modifier: Modifier = Modifier,
                otherUserId: String
 ) {
     val currentUserId = authViewModel.currentUserUid() ?: return
+    val currentUserEmail = authViewModel.currentUserEmail().orEmpty()
     val messages by chatViewModel.messages.collectAsState()
     var inputText by remember { mutableStateOf(TextFieldValue("")) }
+    var otherEmail by remember { mutableStateOf<String?>(null) }
 
     LaunchedEffect(otherUserId) {
-        chatViewModel.loadConversation(currentUserId, otherUserId)
+        otherEmail = fetchUserEmail(otherUserId)
+    }
+
+    LaunchedEffect(currentUserId, currentUserEmail, otherUserId, otherEmail) {
+        val oe = otherEmail ?: return@LaunchedEffect
+        chatViewModel.loadConversation(
+            currentId = currentUserId,
+            currentEmail = currentUserEmail,
+            otherId = otherUserId,
+            otherEmail = oe
+        )
     }
 
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("$otherUserId") }
+                title = { Text(otherEmail ?: otherUserId)  }
             )
         },
         bottomBar = {
@@ -145,3 +157,10 @@ fun ChatInputBar(
     }
 }
 
+suspend fun fetchUserEmail(uid: String): String {
+    val db = com.google.firebase.firestore.FirebaseFirestore.getInstance()
+    val snap = db.collection("users").document(uid).get().await()
+    return snap.getString("email").orElse("")
+}
+
+private fun String?.orElse(fallback: String) = this ?: fallback

@@ -17,23 +17,38 @@ class ChatViewModel(
     val messages: StateFlow<List<ChatMessage>> = _messages
 
     private var currentUserId: String? = null
+    private var currentUserEmail: String? = null
     private var otherUserId: String? = null
+    private var otherUserEmail: String? = null
 
-    fun loadConversation(currentUser: String, otherUser: String) {
-        currentUserId = currentUser
-        otherUserId = otherUser
+    fun loadConversation(currentId: String,
+                         currentEmail: String,
+                         otherId: String,
+                         otherEmail: String) {
+        currentUserId = currentId
+        currentUserEmail = currentEmail
+        otherUserId = otherId
+        otherUserEmail = otherEmail
 
         viewModelScope.launch {
-            repository.getMessagesForConversation(currentUser, otherUser)
+            repository.getMessagesForConversation(currentId, otherId)
                 .collectLatest { list -> _messages.value = list }
         }
     }
 
     fun sendMessage(text: String) {
-        val sender = currentUserId ?: return
-        val receiver = otherUserId ?: return
+        val sId = currentUserId ?: return
+        val sEmail = currentUserEmail ?: return
+        val rId = otherUserId ?: return
+        val rEmail = otherUserEmail ?: return
         viewModelScope.launch {
-            repository.sendMessage(sender, receiver, text)
+            repository.sendMessage(senderId = sId,
+                senderEmail = sEmail,
+                receiverId = rId,
+                receiverEmail = rEmail,
+                text = text)
         }
     }
+
+
 }
