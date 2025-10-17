@@ -31,6 +31,12 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.example.cstore.ui.components.ListingCard
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Email
+import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Person
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -39,6 +45,7 @@ fun HomeScreen(
     onCreateListing: () -> Unit,
     onProfile: () -> Unit,
     onItemClick: (String) -> Unit = {},
+    onChats: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     val state by viewModel.uiState.collectAsState()
@@ -48,7 +55,7 @@ fun HomeScreen(
     // Load listings when screen is first displayed
     LaunchedEffect(Unit) {
         viewModel.loadListings()
-        // Load weather for Melbourne as default (you can change this to user's location)
+        // Load weather for Melbourne as default
         viewModel.loadWeather(-37.8136, 144.9631, "dd6f05f68644e8fa202315bd4704d451")
     }
 
@@ -57,8 +64,18 @@ fun HomeScreen(
                 TopAppBar(
                     title = { Text("CircularStore") },
                     actions = {
-                        TextButton(onClick = onCreateListing) { Text("Add") }
-                        TextButton(onClick = onProfile) { Text("Profile") }
+                        // Chats
+                        IconButton(onClick = onChats) {
+                            Icon(imageVector = Icons.Filled.Email, contentDescription = "Chats")
+                        }
+                        // Add listing
+                        IconButton(onClick = onCreateListing) {
+                            Icon(imageVector = Icons.Filled.Add, contentDescription = "Add listing")
+                        }
+                        // Profile
+                        IconButton(onClick = onProfile) {
+                            Icon(imageVector = Icons.Filled.Person, contentDescription = "Profile")
+                        }
                     }
                 )
             },

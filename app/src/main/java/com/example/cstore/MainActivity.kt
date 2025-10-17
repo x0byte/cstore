@@ -224,7 +224,5 @@ fun App() {
                 onShareItem = { /* TODO */ }
             )
         }
-
-        // Dev panel route removed for production UX
     }
 }
