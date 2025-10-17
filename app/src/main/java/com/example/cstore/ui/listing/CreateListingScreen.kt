@@ -53,12 +53,17 @@ import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
 import com.example.cstore.data.listing.Listing
 import com.example.cstore.data.listing.ListingRepository
+import com.example.cstore.ml.ReceiptOCRProcessor
 import com.example.cstore.ui.auth.AuthViewModel
 import com.google.android.gms.location.FusedLocationProviderClient
 import com.google.android.gms.location.LocationServices
 import kotlinx.coroutines.launch
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.asImageBitmap
+import android.graphics.BitmapFactory
+import android.provider.MediaStore
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -82,13 +87,42 @@ fun CreateListingScreen(
     var availableOn by remember { mutableStateOf<Long?>(null) }
     var imageUri by remember { mutableStateOf<Uri?>(null) }
     var isSaving by remember { mutableStateOf(false) }
+    var isScanning by remember { mutableStateOf(false) }
     var error by remember { mutableStateOf<String?>(null) }
 
-    val categories = listOf("Clothing", "Electronics", "Books", "Furniture", "Other")
+    val categories = listOf("Clothing", "Electronics", "Books", "Furniture", "Other", "Home", "Sports", "Outdoor")
     var expanded by remember { mutableStateOf(false) }
 
     val imagePicker = rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { uri ->
         imageUri = uri
+    }
+    
+    val receiptPicker = rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { uri ->
+        if (uri != null) {
+            isScanning = true
+            scope.launch {
+                try {
+                    val bitmap = MediaStore.Images.Media.getBitmap(context.contentResolver, uri)
+                    val result = ReceiptOCRProcessor.processImage(bitmap)
+                    result.fold(
+                        onSuccess = { data ->
+                            data.itemName?.let { title = it }
+                            data.price?.let { priceText = it.toString() }
+                            data.category?.let { category = it }
+                            data.description?.let { description = it }
+                            isScanning = false
+                        },
+                        onFailure = { e ->
+                            error = "OCR failed: ${e.message}"
+                            isScanning = false
+                        }
+                    )
+                } catch (e: Exception) {
+                    error = "Failed to process image: ${e.message}"
+                    isScanning = false
+                }
+            }
+        }
     }
 
     val permissionLauncher = rememberLauncherForActivityResult(
@@ -141,6 +175,50 @@ fun CreateListingScreen(
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.8f)
                     )
+                }
+            }
+
+            // Scan Receipt Button
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(12.dp),
+                elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.secondaryContainer)
+            ) {
+                Column(
+                    modifier = Modifier.padding(16.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    Text(
+                        "Quick Fill with OCR",
+                        style = MaterialTheme.typography.titleMedium,
+                        color = MaterialTheme.colorScheme.onSecondaryContainer
+                    )
+                    Spacer(Modifier.height(8.dp))
+                    Text(
+                        "Scan a receipt or price tag to auto-fill details",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSecondaryContainer.copy(alpha = 0.8f)
+                    )
+                    Spacer(Modifier.height(12.dp))
+                    Button(
+                        onClick = { receiptPicker.launch("image/*") },
+                        modifier = Modifier.fillMaxWidth(),
+                        enabled = !isScanning && !isSaving,
+                        shape = RoundedCornerShape(8.dp)
+                    ) {
+                        if (isScanning) {
+                            CircularProgressIndicator(
+                                modifier = Modifier.size(20.dp),
+                                strokeWidth = 2.dp,
+                                color = MaterialTheme.colorScheme.onPrimary
+                            )
+                            Spacer(Modifier.width(8.dp))
+                            Text("Scanning...")
+                        } else {
+                            Text("📸 Scan Receipt / Price Tag")
+                        }
+                    }
                 }
             }
 
