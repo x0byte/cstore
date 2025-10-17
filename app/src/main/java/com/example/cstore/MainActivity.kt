@@ -217,13 +217,22 @@ fun App() {
         ) { backStackEntry ->
             val listingId = backStackEntry.arguments?.getString("listingId") ?: ""
             val itemDetailViewModel: ItemDetailViewModel = viewModel()
+            val currentUserId = authViewModel.currentUserUid()
 
             ItemDetailScreen(
                 listingId = listingId,
                 viewModel = itemDetailViewModel,
                 onBack = { navController.popBackStack() },
                 onRequestItem = { /* TODO */ },
-                onChatWithOwner = { /* TODO */ },
+                onChatWithOwner = { ownerId ->
+                    // Check if user is trying to chat with themselves
+                    if (ownerId == currentUserId) {
+                        // Show a toast or snackbar (for now, just don't navigate)
+                        return@ItemDetailScreen
+                    }
+                    // Navigate to chat with listing context
+                    navController.navigate("chat/$ownerId?listingId=$listingId")
+                },
                 onShareItem = { /* TODO */ }
             )
         }
@@ -238,13 +247,24 @@ fun App() {
         }
 
         composable(
-            "chat/{otherUserId}",
-            arguments = listOf(navArgument("otherUserId") { type = NavType.StringType })
+            "chat/{otherUserId}?listingId={listingId}",
+            arguments = listOf(
+                navArgument("otherUserId") { type = NavType.StringType },
+                navArgument("listingId") { 
+                    type = NavType.StringType
+                    nullable = true
+                    defaultValue = null
+                }
+            )
         ) { backStackEntry ->
             val otherUserId = backStackEntry.arguments?.getString("otherUserId") ?: ""
+            val listingId = backStackEntry.arguments?.getString("listingId")
+            
             ChatScreen(
                 authViewModel = authViewModel,
-                otherUserId = otherUserId
+                otherUserId = otherUserId,
+                listingId = listingId,
+                onBack = { navController.popBackStack() }
             )
         }
     }
