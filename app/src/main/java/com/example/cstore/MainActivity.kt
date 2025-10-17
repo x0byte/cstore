@@ -87,9 +87,13 @@ fun App() {
     NavHost(navController = navController, startDestination = "login") {
 
         composable("login") {
+            val context = LocalContext.current
+
             LoginScreen(
                 state = state,
-                onSignIn = { email, password -> authViewModel.signIn(email, password) },
+                onSignIn = { email, password, rememberMe ->
+                    authViewModel.signIn(email, password, rememberMe, context)
+                },
                 onSignUpNavigate = { navController.navigate("signup") },
                 onGoogleClick = { googleLauncher.launch(googleSignInClient.signInIntent) },
                 onForgotPassword = { navController.navigate("forgot_password") },
