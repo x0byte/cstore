@@ -223,7 +223,10 @@ fun App() {
                 viewModel = itemDetailViewModel,
                 onBack = { navController.popBackStack() },
                 onRequestItem = { /* TODO */ },
-                onChatWithOwner = { /* TODO */ },
+                onChatWithOwner = { ownerId ->
+                    // Navigate to chat with listing context
+                    navController.navigate("chat/$ownerId?listingId=$listingId")
+                },
                 onShareItem = { /* TODO */ }
             )
         }
@@ -238,13 +241,23 @@ fun App() {
         }
 
         composable(
-            "chat/{otherUserId}",
-            arguments = listOf(navArgument("otherUserId") { type = NavType.StringType })
+            "chat/{otherUserId}?listingId={listingId}",
+            arguments = listOf(
+                navArgument("otherUserId") { type = NavType.StringType },
+                navArgument("listingId") { 
+                    type = NavType.StringType
+                    nullable = true
+                    defaultValue = null
+                }
+            )
         ) { backStackEntry ->
             val otherUserId = backStackEntry.arguments?.getString("otherUserId") ?: ""
+            val listingId = backStackEntry.arguments?.getString("listingId")
+            
             ChatScreen(
                 authViewModel = authViewModel,
-                otherUserId = otherUserId
+                otherUserId = otherUserId,
+                listingId = listingId
             )
         }
     }

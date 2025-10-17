@@ -24,19 +24,33 @@ import kotlinx.coroutines.tasks.await
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun ChatScreen(modifier: Modifier = Modifier,
-               chatViewModel: ChatViewModel = viewModel(),
-               authViewModel: AuthViewModel = viewModel(),
-               otherUserId: String
+fun ChatScreen(
+    modifier: Modifier = Modifier,
+    chatViewModel: ChatViewModel = viewModel(),
+    authViewModel: AuthViewModel = viewModel(),
+    otherUserId: String,
+    listingId: String? = null
 ) {
     val currentUserId = authViewModel.currentUserUid() ?: return
     val currentUserEmail = authViewModel.currentUserEmail().orEmpty()
     val messages by chatViewModel.messages.collectAsState()
     var inputText by remember { mutableStateOf(TextFieldValue("")) }
     var otherEmail by remember { mutableStateOf<String?>(null) }
+    var listingTitle by remember { mutableStateOf<String?>(null) }
+    var showExpressInterest by remember { mutableStateOf(false) }
 
+    // Fetch user email
     LaunchedEffect(otherUserId) {
         otherEmail = fetchUserEmail(otherUserId)
+    }
+    
+    // Fetch listing details if provided
+    LaunchedEffect(listingId) {
+        if (listingId != null) {
+            listingTitle = fetchListingTitle(listingId)
+            // Show "Express Interest" button only when first opening chat from item
+            showExpressInterest = messages.isEmpty()
+        }
     }
 
     LaunchedEffect(currentUserId, currentUserEmail, otherUserId, otherEmail) {
@@ -45,14 +59,30 @@ fun ChatScreen(modifier: Modifier = Modifier,
             currentId = currentUserId,
             currentEmail = currentUserEmail,
             otherId = otherUserId,
-            otherEmail = oe
+            otherEmail = oe,
+            listingId = listingId,
+            listingTitle = listingTitle
         )
     }
 
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text(otherEmail ?: otherUserId)  }
+                title = {
+                    Column {
+                        Text(
+                            text = otherEmail ?: otherUserId,
+                            style = MaterialTheme.typography.titleMedium
+                        )
+                        if (listingTitle != null) {
+                            Text(
+                                text = "About: $listingTitle",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+                    }
+                }
             )
         },
         bottomBar = {
@@ -69,14 +99,49 @@ fun ChatScreen(modifier: Modifier = Modifier,
         },
         modifier = modifier
     ) { innerPadding ->
-        ChatMessagesList(
-            messages = messages,
-            currentUserId = currentUserId,
+        Column(
             modifier = Modifier
                 .padding(innerPadding)
                 .fillMaxSize()
-                .background(MaterialTheme.colorScheme.background)
-        )
+        ) {
+            // Express Interest button
+            if (showExpressInterest && listingTitle != null) {
+                Card(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(8.dp),
+                    colors = CardDefaults.cardColors(
+                        containerColor = MaterialTheme.colorScheme.primaryContainer
+                    )
+                ) {
+                    Column(modifier = Modifier.padding(12.dp)) {
+                        Text(
+                            "Quick Actions",
+                            style = MaterialTheme.typography.labelMedium,
+                            color = MaterialTheme.colorScheme.onPrimaryContainer
+                        )
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Button(
+                            onClick = {
+                                chatViewModel.sendMessage("Hey! I'm interested in \"$listingTitle\". Is it still available?")
+                                showExpressInterest = false
+                            },
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Text("💬 Express Interest")
+                        }
+                    }
+                }
+            }
+            
+            ChatMessagesList(
+                messages = messages,
+                currentUserId = currentUserId,
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(MaterialTheme.colorScheme.background)
+            )
+        }
     }
 }
 
@@ -161,6 +226,16 @@ suspend fun fetchUserEmail(uid: String): String {
     val db = com.google.firebase.firestore.FirebaseFirestore.getInstance()
     val snap = db.collection("users").document(uid).get().await()
     return snap.getString("email").orElse("")
+}
+
+suspend fun fetchListingTitle(listingId: String): String? {
+    return try {
+        val db = com.google.firebase.firestore.FirebaseFirestore.getInstance()
+        val snap = db.collection("listings").document(listingId).get().await()
+        snap.getString("title")
+    } catch (e: Exception) {
+        null
+    }
 }
 
 private fun String?.orElse(fallback: String) = this ?: fallback

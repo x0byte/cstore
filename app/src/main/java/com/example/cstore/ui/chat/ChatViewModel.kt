@@ -20,15 +20,23 @@ class ChatViewModel(
     private var currentUserEmail: String? = null
     private var otherUserId: String? = null
     private var otherUserEmail: String? = null
+    private var listingId: String? = null
+    private var listingTitle: String? = null
 
-    fun loadConversation(currentId: String,
-                         currentEmail: String,
-                         otherId: String,
-                         otherEmail: String) {
+    fun loadConversation(
+        currentId: String,
+        currentEmail: String,
+        otherId: String,
+        otherEmail: String,
+        listingId: String? = null,
+        listingTitle: String? = null
+    ) {
         currentUserId = currentId
         currentUserEmail = currentEmail
         otherUserId = otherId
         otherUserEmail = otherEmail
+        this.listingId = listingId
+        this.listingTitle = listingTitle
 
         viewModelScope.launch {
             repository.getMessagesForConversation(currentId, otherId)
@@ -42,11 +50,15 @@ class ChatViewModel(
         val rId = otherUserId ?: return
         val rEmail = otherUserEmail ?: return
         viewModelScope.launch {
-            repository.sendMessage(senderId = sId,
+            repository.sendMessage(
+                senderId = sId,
                 senderEmail = sEmail,
                 receiverId = rId,
                 receiverEmail = rEmail,
-                text = text)
+                text = text,
+                listingId = listingId,
+                listingTitle = listingTitle
+            )
         }
     }
 
