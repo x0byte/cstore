@@ -5,6 +5,8 @@ import androidx.lifecycle.viewModelScope
 import com.example.cstore.data.listing.Listing
 import com.example.cstore.data.listing.ListingRepository
 import com.example.cstore.data.weather.WeatherData
+import com.example.cstore.domain.aggregation.ContextAggregator
+import com.example.cstore.domain.aggregation.ContextState
 import com.example.cstore.data.weather.WeatherRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -33,6 +35,8 @@ class HomeViewModel(
     private val _weatherState = MutableStateFlow<WeatherUiState>(WeatherUiState.Loading)
     val weatherState: StateFlow<WeatherUiState> = _weatherState
 
+    val contextState: StateFlow<ContextState> = ContextAggregator.context
+
     // Don't auto-load on init to prevent crashes before auth
 
     fun loadListings() {
@@ -44,7 +48,13 @@ class HomeViewModel(
                     onSuccess = { list -> 
                         // Filter out any invalid listings
                         val validListings = list.filter { it.title.isNotBlank() }
-                        HomeUiState.Success(validListings)
+                        // Update aggregator and sort by relevance if available
+                        ContextAggregator.updateListings(validListings)
+                        val ctx = ContextAggregator.context.value
+                        val sorted = if (ctx.listingContexts.isNotEmpty()) {
+                            validListings.sortedByDescending { l -> ctx.listingContexts[l.id]?.relevanceScore ?: 0.0 }
+                        } else validListings
+                        HomeUiState.Success(sorted)
                     },
                     onFailure = { e -> 
                         HomeUiState.Error("Failed to load listings: ${e.message}")
@@ -70,6 +80,7 @@ class HomeViewModel(
                             cityName = response.name ?: "Unknown"
                         )
                         _weatherState.value = WeatherUiState.Success(weatherData)
+                        ContextAggregator.updateWeather(weatherData)
                     },
                     onFailure = { e ->
                         _weatherState.value = WeatherUiState.Error("Weather unavailable: ${e.message}")

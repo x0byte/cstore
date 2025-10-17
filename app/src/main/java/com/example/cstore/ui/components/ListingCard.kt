@@ -2,7 +2,10 @@ package com.example.cstore.ui.components
 
 import android.net.Uri
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -11,6 +14,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
@@ -21,9 +25,11 @@ import coil.compose.AsyncImage
 import androidx.compose.ui.res.painterResource
 import com.example.cstore.data.listing.Listing
 
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun ListingCard(
-    listing: Listing, 
+    listing: Listing,
+    badges: List<String> = emptyList(),
     modifier: Modifier = Modifier,
     onClick: (() -> Unit)? = null
 ) {
@@ -67,6 +73,28 @@ fun ListingCard(
                 style = MaterialTheme.typography.labelLarge, 
                 color = MaterialTheme.colorScheme.primary
             )
+            if (badges.isNotEmpty()) {
+                Spacer(Modifier.height(6.dp))
+                FlowRow(
+                    horizontalArrangement = Arrangement.spacedBy(4.dp),
+                    verticalArrangement = Arrangement.spacedBy(4.dp)
+                ) {
+                    badges.forEach { badge ->
+                        Surface(
+                            shape = RoundedCornerShape(8.dp),
+                            color = MaterialTheme.colorScheme.secondaryContainer,
+                            modifier = Modifier.padding(0.dp)
+                        ) {
+                            Text(
+                                text = badge,
+                                style = MaterialTheme.typography.labelSmall,
+                                color = MaterialTheme.colorScheme.onSecondaryContainer,
+                                modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
+                            )
+                        }
+                    }
+                }
+            }
         }
     }
 }

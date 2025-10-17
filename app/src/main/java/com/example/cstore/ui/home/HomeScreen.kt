@@ -43,6 +43,7 @@ fun HomeScreen(
 ) {
     val state by viewModel.uiState.collectAsState()
     val weatherState by viewModel.weatherState.collectAsState()
+    val contextState by viewModel.contextState.collectAsState()
 
     // Load listings when screen is first displayed
     LaunchedEffect(Unit) {
@@ -107,8 +108,10 @@ fun HomeScreen(
                         
                         // Listings
                         items(listings) { item ->
+                            val badges = contextState.listingContexts[item.id]?.badges ?: emptyList()
                             ListingCard(
-                                listing = item, 
+                                listing = item,
+                                badges = badges,
                                 modifier = Modifier.fillMaxWidth(),
                                 onClick = { onItemClick(item.id) }
                             )

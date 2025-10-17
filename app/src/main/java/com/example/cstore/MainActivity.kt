@@ -35,6 +35,8 @@ import com.example.cstore.ui.map.MapScreen
 import com.example.cstore.ui.navigation.BottomNavBar
 import com.example.cstore.ui.search.SearchScreen
 import com.example.cstore.ui.theme.CstoreTheme
+import androidx.compose.runtime.LaunchedEffect
+import com.example.cstore.data.events.EventRepository
 import com.google.android.gms.auth.api.signin.GoogleSignIn
 import com.google.android.gms.auth.api.signin.GoogleSignInOptions
 import com.google.android.gms.common.api.ApiException
@@ -63,6 +65,11 @@ fun App() {
         .requestEmail()
         .build()
     val googleSignInClient = GoogleSignIn.getClient(context, gso)
+
+    // Auto-load bundled events CSV once
+    LaunchedEffect(Unit) {
+        EventRepository.autoLoadBundled(context)
+    }
 
     val googleLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.StartActivityForResult()
@@ -191,5 +198,7 @@ fun App() {
                 onShareItem = { /* TODO */ }
             )
         }
+
+        // Dev panel route removed for production UX
     }
 }
