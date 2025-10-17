@@ -203,7 +203,7 @@ fun App() {
             val otherUserId = backStackEntry.arguments?.getString("otherUserId") ?: return@composable
             val otherEmail  = backStackEntry.arguments?.getString("otherEmail")  ?: ""
             ChatScreen(
-                authViewModel = viewModel,  // reuse your AuthViewModel
+                authViewModel = viewModel(),  // reuse your AuthViewModel
                 otherUserId = otherUserId
             )
         }
@@ -216,7 +216,7 @@ fun App() {
         ) { backStackEntry ->
             val otherUserId = backStackEntry.arguments?.getString("otherUserId") ?: return@composable
             ChatScreen(
-                authViewModel = viewModel,
+                authViewModel = viewModel(),
                 otherUserId = otherUserId
             )
         }
