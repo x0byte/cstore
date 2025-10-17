@@ -141,6 +141,10 @@ class AuthViewModel(
             }
         }
     }
+
+    suspend fun sendPasswordResetEmail(email: String): Result<Unit> {
+        return repository.sendPasswordResetEmail(email)
+    }
 }
 
 
