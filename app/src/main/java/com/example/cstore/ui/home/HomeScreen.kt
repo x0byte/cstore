@@ -31,12 +31,6 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.example.cstore.ui.components.ListingCard
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Chat
-import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.Person
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -45,7 +39,6 @@ fun HomeScreen(
     onCreateListing: () -> Unit,
     onProfile: () -> Unit,
     onItemClick: (String) -> Unit = {},
-    onChats: () -> Unit,                 // NEW
     modifier: Modifier = Modifier
 ) {
     val state by viewModel.uiState.collectAsState()
@@ -64,18 +57,8 @@ fun HomeScreen(
                 TopAppBar(
                     title = { Text("CircularStore") },
                     actions = {
-                        // Chats
-                        IconButton(onClick = onChats) {
-                            Icon(imageVector = Icons.Filled.Chat, contentDescription = "Chats")
-                        }
-                        // Add listing
-                        IconButton(onClick = onCreateListing) {
-                            Icon(imageVector = Icons.Filled.Add, contentDescription = "Add listing")
-                        }
-                        // Profile
-                        IconButton(onClick = onProfile) {
-                            Icon(imageVector = Icons.Filled.Person, contentDescription = "Profile")
-                        }
+                        TextButton(onClick = onCreateListing) { Text("Add") }
+                        TextButton(onClick = onProfile) { Text("Profile") }
                     }
                 )
             },
