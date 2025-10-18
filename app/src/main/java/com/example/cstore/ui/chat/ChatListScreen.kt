@@ -6,6 +6,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -32,17 +33,43 @@ fun ChatListScreen(
     Scaffold(
         topBar = { TopAppBar(title = { Text("Chats") }) }
     ) { innerPadding ->
-        LazyColumn(
-            modifier = Modifier
-                .padding(innerPadding)
-                .fillMaxSize()
-                .padding(8.dp)
-        ) {
-            items(chatList) { chat ->
-                ChatListItem(chat = chat,
-                    currentUserId = currentUserId,
-                    currentUserEmail = currentUserEmail,
-                    onChatSelected = onChatSelected)
+        if (chatList.isEmpty()) {
+            // Empty state
+            Box(
+                modifier = Modifier
+                    .padding(innerPadding)
+                    .fillMaxSize(),
+                contentAlignment = Alignment.Center
+            ) {
+                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    Text(
+                        text = "No chats yet",
+                        style = MaterialTheme.typography.titleLarge,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Text(
+                        text = "Start chatting with sellers from item listings",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+            }
+        } else {
+            LazyColumn(
+                modifier = Modifier
+                    .padding(innerPadding)
+                    .fillMaxSize()
+                    .padding(8.dp)
+            ) {
+                items(chatList) { chat ->
+                    ChatListItem(
+                        chat = chat,
+                        currentUserId = currentUserId,
+                        currentUserEmail = currentUserEmail,
+                        onChatSelected = onChatSelected
+                    )
+                }
             }
         }
     }
@@ -63,11 +90,39 @@ fun ChatListItem(chat: ChatSummary, currentUserId: String, currentUserEmail: Str
             .fillMaxWidth()
             .padding(vertical = 4.dp)
             .clickable { onChatSelected(otherUserId, otherEmail) },
-        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
     ) {
-        Column(modifier = Modifier.padding(12.dp)) {
-            Text(text = "Chat with: $otherEmail", style = MaterialTheme.typography.titleMedium)
-            Text(text = chat.lastMessage, style = MaterialTheme.typography.bodyMedium)
+        Row(
+            modifier = Modifier.padding(16.dp),
+            horizontalArrangement = Arrangement.SpaceBetween
+        ) {
+            Column(modifier = Modifier.weight(1f)) {
+                // Show item title if available
+                if (!chat.listingTitle.isNullOrBlank()) {
+                    Text(
+                        text = chat.listingTitle,
+                        style = MaterialTheme.typography.titleMedium,
+                        color = MaterialTheme.colorScheme.primary
+                    )
+                    Spacer(modifier = Modifier.height(2.dp))
+                }
+                
+                Text(
+                    text = otherEmail,
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurface
+                )
+                Spacer(modifier = Modifier.height(4.dp))
+                Text(
+                    text = chat.lastMessage,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    maxLines = 1
+                )
+            }
+            
+            Spacer(modifier = Modifier.width(8.dp))
+            
             Text(
                 text = formattedTime,
                 style = MaterialTheme.typography.labelSmall,

@@ -63,6 +63,10 @@ class MainActivity : ComponentActivity() {
         }
         // Schedule periodic event refresh worker (runs every 6 hours)
         scheduleEventRefresh()
+        
+        // Schedule periodic event refresh worker (runs every 6 hours)
+        scheduleEventRefresh()
+        
         setContent { CstoreTheme { App() } }
     }
     

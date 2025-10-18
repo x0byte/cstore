@@ -6,6 +6,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Send
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.*
@@ -24,19 +25,34 @@ import kotlinx.coroutines.tasks.await
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun ChatScreen(modifier: Modifier = Modifier,
-               chatViewModel: ChatViewModel = viewModel(),
-               authViewModel: AuthViewModel = viewModel(),
-               otherUserId: String
+fun ChatScreen(
+    modifier: Modifier = Modifier,
+    chatViewModel: ChatViewModel = viewModel(),
+    authViewModel: AuthViewModel = viewModel(),
+    otherUserId: String,
+    listingId: String? = null,
+    onBack: () -> Unit = {}
 ) {
     val currentUserId = authViewModel.currentUserUid() ?: return
     val currentUserEmail = authViewModel.currentUserEmail().orEmpty()
     val messages by chatViewModel.messages.collectAsState()
     var inputText by remember { mutableStateOf(TextFieldValue("")) }
     var otherEmail by remember { mutableStateOf<String?>(null) }
+    var listingTitle by remember { mutableStateOf<String?>(null) }
+    var showExpressInterest by remember { mutableStateOf(false) }
 
+    // Fetch user email
     LaunchedEffect(otherUserId) {
         otherEmail = fetchUserEmail(otherUserId)
+    }
+    
+    // Fetch listing details if provided
+    LaunchedEffect(listingId) {
+        if (listingId != null) {
+            listingTitle = fetchListingTitle(listingId)
+            // Show "Express Interest" button only when first opening chat from item
+            showExpressInterest = messages.isEmpty()
+        }
     }
 
     LaunchedEffect(currentUserId, currentUserEmail, otherUserId, otherEmail) {
@@ -45,14 +61,38 @@ fun ChatScreen(modifier: Modifier = Modifier,
             currentId = currentUserId,
             currentEmail = currentUserEmail,
             otherId = otherUserId,
-            otherEmail = oe
+            otherEmail = oe,
+            listingId = listingId,
+            listingTitle = listingTitle
         )
     }
 
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text(otherEmail ?: otherUserId)  }
+                title = {
+                    Column {
+                        Text(
+                            text = otherEmail ?: otherUserId,
+                            style = MaterialTheme.typography.titleMedium
+                        )
+                        if (listingTitle != null) {
+                            Text(
+                                text = "About: $listingTitle",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+                    }
+                },
+                navigationIcon = {
+                    IconButton(onClick = onBack) {
+                        Icon(
+                            imageVector = Icons.Default.ArrowBack,
+                            contentDescription = "Back"
+                        )
+                    }
+                }
             )
         },
         bottomBar = {
@@ -69,14 +109,49 @@ fun ChatScreen(modifier: Modifier = Modifier,
         },
         modifier = modifier
     ) { innerPadding ->
-        ChatMessagesList(
-            messages = messages,
-            currentUserId = currentUserId,
+        Column(
             modifier = Modifier
                 .padding(innerPadding)
                 .fillMaxSize()
-                .background(MaterialTheme.colorScheme.background)
-        )
+        ) {
+            // Express Interest button
+            if (showExpressInterest && listingTitle != null) {
+                Card(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(8.dp),
+                    colors = CardDefaults.cardColors(
+                        containerColor = MaterialTheme.colorScheme.primaryContainer
+                    )
+                ) {
+                    Column(modifier = Modifier.padding(12.dp)) {
+                        Text(
+                            "Quick Actions",
+                            style = MaterialTheme.typography.labelMedium,
+                            color = MaterialTheme.colorScheme.onPrimaryContainer
+                        )
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Button(
+                            onClick = {
+                                chatViewModel.sendMessage("Hey! I'm interested in \"$listingTitle\". Is it still available?")
+                                showExpressInterest = false
+                            },
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Text("💬 Express Interest")
+                        }
+                    }
+                }
+            }
+            
+            ChatMessagesList(
+                messages = messages,
+                currentUserId = currentUserId,
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(MaterialTheme.colorScheme.background)
+            )
+        }
     }
 }
 
@@ -91,6 +166,7 @@ fun ChatMessagesList(messages: List<com.example.cstore.data.chat.ChatMessage>, c
         items(messages) { message ->
             ChatBubble(
                 text = message.text,
+                timestamp = message.timestamp,
                 isUser = message.senderId == currentUserId
             )
         }
@@ -98,34 +174,74 @@ fun ChatMessagesList(messages: List<com.example.cstore.data.chat.ChatMessage>, c
 }
 
 @Composable
-fun ChatBubble(text: String, isUser: Boolean) {
-    val bubbleColor =
-        if (isUser) MaterialTheme.colorScheme.primaryContainer
-        else MaterialTheme.colorScheme.surfaceVariant
-    val alignment =
-        if (isUser) Alignment.CenterEnd else Alignment.CenterStart
+fun ChatBubble(text: String, timestamp: Long, isUser: Boolean) {
+    val bubbleColor = if (isUser) {
+        MaterialTheme.colorScheme.primary
+    } else {
+        MaterialTheme.colorScheme.surfaceVariant
+    }
+    
+    val textColor = if (isUser) {
+        MaterialTheme.colorScheme.onPrimary
+    } else {
+        MaterialTheme.colorScheme.onSurfaceVariant
+    }
+    
+    val timestampColor = if (isUser) {
+        MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.7f)
+    } else {
+        MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
+    }
+    
+    val alignment = if (isUser) Alignment.CenterEnd else Alignment.CenterStart
+    
+    val shape = if (isUser) {
+        RoundedCornerShape(
+            topStart = 18.dp,
+            topEnd = 18.dp,
+            bottomStart = 18.dp,
+            bottomEnd = 4.dp
+        )
+    } else {
+        RoundedCornerShape(
+            topStart = 18.dp,
+            topEnd = 18.dp,
+            bottomStart = 4.dp,
+            bottomEnd = 18.dp
+        )
+    }
+    
+    val timeText = remember(timestamp) {
+        val sdf = java.text.SimpleDateFormat("h:mm a", java.util.Locale.getDefault())
+        sdf.format(java.util.Date(timestamp))
+    }
 
     Box(
         modifier = Modifier.fillMaxWidth(),
         contentAlignment = alignment
     ) {
         Surface(
-            shape = RoundedCornerShape(16.dp),
             color = bubbleColor,
-            tonalElevation = 2.dp,
+            shape = shape,
             modifier = Modifier
+                .padding(4.dp)
                 .widthIn(max = 280.dp)
-                .padding(horizontal = 4.dp)
         ) {
-            Text(
-                text = text,
-                style = MaterialTheme.typography.bodyMedium,
-                color = if (isUser)
-                    MaterialTheme.colorScheme.onPrimaryContainer
-                else
-                    MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier.padding(12.dp)
-            )
+            Column(
+                modifier = Modifier.padding(horizontal = 16.dp, vertical = 10.dp)
+            ) {
+                Text(
+                    text = text,
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = textColor
+                )
+                Spacer(modifier = Modifier.height(2.dp))
+                Text(
+                    text = timeText,
+                    style = MaterialTheme.typography.labelSmall,
+                    color = timestampColor
+                )
+            }
         }
     }
 }
@@ -161,6 +277,16 @@ suspend fun fetchUserEmail(uid: String): String {
     val db = com.google.firebase.firestore.FirebaseFirestore.getInstance()
     val snap = db.collection("users").document(uid).get().await()
     return snap.getString("email").orElse("")
+}
+
+suspend fun fetchListingTitle(listingId: String): String? {
+    return try {
+        val db = com.google.firebase.firestore.FirebaseFirestore.getInstance()
+        val snap = db.collection("listings").document(listingId).get().await()
+        snap.getString("title")
+    } catch (e: Exception) {
+        null
+    }
 }
 
 private fun String?.orElse(fallback: String) = this ?: fallback
