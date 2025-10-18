@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
@@ -19,6 +20,8 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Clear
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -39,6 +42,8 @@ import com.google.android.gms.maps.MapView
 import com.google.android.gms.maps.model.CameraPosition
 import com.google.android.gms.maps.model.LatLng
 import com.google.android.gms.maps.model.MarkerOptions
+import androidx.compose.material3.Button
+
 
 @Composable
 fun MapScreen(
@@ -84,12 +89,12 @@ fun MapScreen(
                         .padding(16.dp)
                 ) {
                     Text(
-                        text = "🗺️ Google Maps - ${currentState.listings.size} items with locations",
+                        text = "Google Maps - ${currentState.listings.size} items with locations",
                         style = MaterialTheme.typography.titleMedium
                     )
                     Spacer(Modifier.height(8.dp))
                 }
-                
+
                 MapContent(
                     listings = currentState.listings,
                     onMarkerClick = { listing -> selectedListing = listing },
@@ -128,6 +133,66 @@ fun MapContent(
     val context = LocalContext.current
     var searchQuery by remember { mutableStateOf("") }
     var isSearching by remember { mutableStateOf(false) }
+    var searchError by remember { mutableStateOf<String?>(null) }
+    fun performSearch(query: String, googleMap: GoogleMap?) {
+        if (query.isBlank() || googleMap == null) return
+
+        isSearching = true
+        searchError = null
+
+        val placesClient = com.google.android.libraries.places.api.Places.createClient(context)
+        val request = com.google.android.libraries.places.api.net.FindAutocompletePredictionsRequest.builder()
+            .setQuery(query)
+            .setLocationBias(
+                com.google.android.libraries.places.api.model.RectangularBounds.newInstance(
+                    com.google.android.gms.maps.model.LatLng(-37.9, 144.8),  // Southwest
+                    com.google.android.gms.maps.model.LatLng(-37.7, 145.1)   // Northeast
+                )
+            )
+            .build()
+
+        placesClient.findAutocompletePredictions(request)
+            .addOnSuccessListener { response ->
+                isSearching = false
+
+                if (response.autocompletePredictions.isNotEmpty()) {
+                    val prediction = response.autocompletePredictions[0]
+                    val placeId = prediction.placeId
+                    val placeFields = listOf(
+                        com.google.android.libraries.places.api.model.Place.Field.LAT_LNG,
+                        com.google.android.libraries.places.api.model.Place.Field.NAME
+                    )
+
+                    val fetchRequest = com.google.android.libraries.places.api.net.FetchPlaceRequest.newInstance(placeId, placeFields)
+
+                    placesClient.fetchPlace(fetchRequest)
+                        .addOnSuccessListener { fetchResponse ->
+                            val place = fetchResponse.place
+                            val latLng = place.latLng
+
+                            if (latLng != null) {
+                                googleMap.animateCamera(
+                                    com.google.android.gms.maps.CameraUpdateFactory.newLatLngZoom(latLng, 14f)
+                                )
+                                android.util.Log.d("MapSearch", "Found: ${place.name} at $latLng")
+                            }
+                        }
+                        .addOnFailureListener { e ->
+                            searchError = "Failed to get place details: ${e.message}"
+                            android.util.Log.e("MapSearch", "Fetch place failed", e)
+                        }
+                } else {
+                    searchError = "No results found for \"$query\""
+                }
+            }
+            .addOnFailureListener { e ->
+                isSearching = false
+                searchError = "Search failed: ${e.message}"
+                android.util.Log.e("MapSearch", "Search failed", e)
+            }
+    }
+
+    var googleMapInstance by remember { mutableStateOf<GoogleMap?>(null) }
 
     if (listings.isEmpty()) {
         // Show empty state
@@ -155,6 +220,7 @@ fun MapContent(
                     MapView(context).apply {
                         onCreate(null)
                         getMapAsync { googleMap ->
+                            googleMapInstance = googleMap
                             // Configure map
                             googleMap.uiSettings.isZoomControlsEnabled = true
                             googleMap.uiSettings.isMyLocationButtonEnabled = false
@@ -212,14 +278,15 @@ fun MapContent(
             )
             
             // Search bar at top
+
             Box(
                 modifier = Modifier
                     .align(Alignment.TopCenter)
                     .fillMaxWidth()
                     .padding(16.dp)
             ) {
-                androidx.compose.material3.Card(
-                    colors = androidx.compose.material3.CardDefaults.cardColors(
+                Card(
+                    colors = CardDefaults.cardColors(
                         containerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.95f)
                     )
                 ) {
@@ -230,24 +297,51 @@ fun MapContent(
                         OutlinedTextField(
                             value = searchQuery,
                             onValueChange = { searchQuery = it },
-                            placeholder = { Text("Search your town or city...") },
+                            placeholder = { Text("Search places in Melbourne...") },
                             modifier = Modifier.weight(1f),
                             singleLine = true,
                             leadingIcon = {
-                                Icon(Icons.Default.Search, contentDescription = "Search")
+                                if (isSearching) {
+                                    CircularProgressIndicator(
+                                        modifier = Modifier.size(20.dp),
+                                        strokeWidth = 2.dp
+                                    )
+                                } else {
+                                    Icon(Icons.Default.Search, contentDescription = "Search")
+                                }
                             },
                             trailingIcon = {
                                 if (searchQuery.isNotEmpty()) {
-                                    IconButton(onClick = { searchQuery = "" }) {
+                                    IconButton(onClick = {
+                                        searchQuery = ""
+                                        searchError = null
+                                    }) {
                                         Icon(Icons.Default.Clear, contentDescription = "Clear")
                                     }
                                 }
-                            }
+                            },
+                            keyboardActions = androidx.compose.foundation.text.KeyboardActions(
+                                onSearch = { performSearch(searchQuery, googleMapInstance) }
+                            ),
+                            keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(
+                                imeAction = androidx.compose.ui.text.input.ImeAction.Search
+                            ),
+                            enabled = !isSearching
                         )
+
+                        Spacer(Modifier.width(8.dp))
+
+                        Button(
+                            onClick = { performSearch(searchQuery, googleMapInstance) },
+                            enabled = searchQuery.isNotEmpty() && !isSearching
+                        ) {
+                            Text("Search")
+                        }
                     }
                 }
             }
-            
+
+
             // Simple item count at bottom
             Box(
                 modifier = Modifier

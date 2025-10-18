@@ -53,12 +53,28 @@ import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
 import com.example.cstore.data.listing.Listing
 import com.example.cstore.data.listing.ListingRepository
+import com.example.cstore.ml.ReceiptOCRProcessor
 import com.example.cstore.ui.auth.AuthViewModel
 import com.google.android.gms.location.FusedLocationProviderClient
 import com.google.android.gms.location.LocationServices
 import kotlinx.coroutines.launch
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.asImageBitmap
+import android.graphics.BitmapFactory
+import android.provider.MediaStore
+import android.location.Geocoder
+import java.util.Locale
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
+import com.google.android.gms.location.Priority
+import com.google.android.gms.tasks.CancellationTokenSource
+
+
+
+
+
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -70,7 +86,9 @@ fun CreateListingScreen(
 ) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
-
+    val fusedClient: FusedLocationProviderClient = remember {
+        LocationServices.getFusedLocationProviderClient(context)
+    }
     var title by remember { mutableStateOf("") }
     var description by remember { mutableStateOf("") }
     var category by remember { mutableStateOf("") }
@@ -82,30 +100,135 @@ fun CreateListingScreen(
     var availableOn by remember { mutableStateOf<Long?>(null) }
     var imageUri by remember { mutableStateOf<Uri?>(null) }
     var isSaving by remember { mutableStateOf(false) }
+    var isScanning by remember { mutableStateOf(false) }
     var error by remember { mutableStateOf<String?>(null) }
 
-    val categories = listOf("Clothing", "Electronics", "Books", "Furniture", "Other")
+    val categories = listOf("Clothing", "Electronics", "Books", "Furniture", "Other", "Home", "Sports", "Outdoor")
     var expanded by remember { mutableStateOf(false) }
 
     val imagePicker = rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { uri ->
         imageUri = uri
     }
+    
+    val receiptPicker = rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { uri ->
+        if (uri != null) {
+            isScanning = true
+            scope.launch {
+                try {
+                    val bitmap = MediaStore.Images.Media.getBitmap(context.contentResolver, uri)
+                    val result = ReceiptOCRProcessor.processImage(bitmap)
+                    result.fold(
+                        onSuccess = { data ->
+                            data.itemName?.let { title = it }
+                            data.price?.let { priceText = it.toString() }
+                            data.category?.let { category = it }
+                            data.description?.let { description = it }
+                            isScanning = false
+                        },
+                        onFailure = { e ->
+                            error = "OCR failed: ${e.message}"
+                            isScanning = false
+                        }
+                    )
+                } catch (e: Exception) {
+                    error = "Failed to process image: ${e.message}"
+                    isScanning = false
+                }
+            }
+        }
+    }
 
     val permissionLauncher = rememberLauncherForActivityResult(
         ActivityResultContracts.RequestMultiplePermissions()
-    ) { /* result ignored; we attempt getLastLocation after */ }
+    ) { permissions ->
+        val fineLocationGranted = permissions[Manifest.permission.ACCESS_FINE_LOCATION] ?: false
+        val coarseLocationGranted = permissions[Manifest.permission.ACCESS_COARSE_LOCATION] ?: false
 
-    val fusedClient: FusedLocationProviderClient = remember { LocationServices.getFusedLocationProviderClient(context) }
+        android.util.Log.d("LocationDebug", "Permission result - Fine: $fineLocationGranted, Coarse: $coarseLocationGranted")
 
-    @SuppressLint("MissingPermission")
-    fun requestLocation() {
-        permissionLauncher.launch(arrayOf(Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION))
-        fusedClient.lastLocation.addOnSuccessListener { loc ->
-            if (loc != null) {
-                latitude = loc.latitude
-                longitude = loc.longitude
+        if (fineLocationGranted || coarseLocationGranted) {
+            @SuppressLint("MissingPermission")
+            run {
+                val cancellationTokenSource = CancellationTokenSource()
+
+                fusedClient.getCurrentLocation(
+                    Priority.PRIORITY_HIGH_ACCURACY,
+                    cancellationTokenSource.token
+                ).addOnSuccessListener { loc ->
+                    if (loc != null) {
+                        android.util.Log.d("LocationDebug", "Current location: ${loc.latitude}, ${loc.longitude}")
+
+                        latitude = loc.latitude
+                        longitude = loc.longitude
+
+                        scope.launch(Dispatchers.IO) {
+                            try {
+                                val geocoder = Geocoder(context, Locale.getDefault())
+
+                                @Suppress("DEPRECATION")
+                                val addresses = geocoder.getFromLocation(loc.latitude, loc.longitude, 1)
+
+                                if (!addresses.isNullOrEmpty()) {
+                                    val address = addresses[0]
+                                    val parts = mutableListOf<String>()
+                                    address.thoroughfare?.let { parts.add(it) }
+                                    address.locality?.let { parts.add(it) }
+                                    address.adminArea?.let { parts.add(it) }
+                                    withContext(Dispatchers.Main) {
+                                        locationName = if (parts.isNotEmpty()) {
+                                            parts.joinToString(", ")
+                                        } else {
+                                            "Unknown location"
+                                        }
+                                        android.util.Log.d("LocationDebug", "Address resolved: $locationName")
+                                    }
+                                } else {
+                                    withContext(Dispatchers.Main) {
+                                        locationName = "Lat: ${loc.latitude}, Lon: ${loc.longitude}"
+                                    }
+                                }
+                            } catch (e: Exception) {
+                                android.util.Log.e("LocationDebug", "Geocoding error: ${e.message}", e)
+                                withContext(Dispatchers.Main) {
+                                    locationName = "Lat: ${loc.latitude}, Lon: ${loc.longitude}"
+                                }
+                            }
+                        }
+
+                    } else {
+                        android.util.Log.w("LocationDebug", "Current location is null, trying lastLocation...")
+
+                        fusedClient.lastLocation.addOnSuccessListener { lastLoc ->
+                            if (lastLoc != null) {
+                                latitude = lastLoc.latitude
+                                longitude = lastLoc.longitude
+                                locationName = "Lat: ${lastLoc.latitude}, Lon: ${lastLoc.longitude}"
+                            } else {
+                                error = "Could not get location. Please enter manually."
+                            }
+                        }.addOnFailureListener { e ->
+                            android.util.Log.e("LocationDebug", "lastLocation failed: ${e.message}", e)
+                            error = "Location error: ${e.message}"
+                        }
+                    }
+                }.addOnFailureListener { e ->
+                    android.util.Log.e("LocationDebug", "getCurrentLocation failed: ${e.message}", e)
+                    error = "Location error: ${e.message}"
+                }
             }
+
+        } else {
+            android.util.Log.w("LocationDebug", "Location permission denied")
+            error = "Location permission denied. Please enter location manually."
         }
+    }
+
+    fun requestLocation() {
+        android.util.Log.d("LocationDebug", "Requesting location permissions...")
+        permissionLauncher.launch(arrayOf(
+            Manifest.permission.ACCESS_FINE_LOCATION,
+            Manifest.permission.ACCESS_COARSE_LOCATION
+        ))
     }
 
     Surface(
@@ -141,6 +264,50 @@ fun CreateListingScreen(
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.8f)
                     )
+                }
+            }
+
+            // Scan Receipt Button
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(12.dp),
+                elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.secondaryContainer)
+            ) {
+                Column(
+                    modifier = Modifier.padding(16.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    Text(
+                        "Quick Fill with OCR",
+                        style = MaterialTheme.typography.titleMedium,
+                        color = MaterialTheme.colorScheme.onSecondaryContainer
+                    )
+                    Spacer(Modifier.height(8.dp))
+                    Text(
+                        "Scan a receipt or price tag to auto-fill details",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSecondaryContainer.copy(alpha = 0.8f)
+                    )
+                    Spacer(Modifier.height(12.dp))
+                    Button(
+                        onClick = { receiptPicker.launch("image/*") },
+                        modifier = Modifier.fillMaxWidth(),
+                        enabled = !isScanning && !isSaving,
+                        shape = RoundedCornerShape(8.dp)
+                    ) {
+                        if (isScanning) {
+                            CircularProgressIndicator(
+                                modifier = Modifier.size(20.dp),
+                                strokeWidth = 2.dp,
+                                color = MaterialTheme.colorScheme.onPrimary
+                            )
+                            Spacer(Modifier.width(8.dp))
+                            Text("Scanning...")
+                        } else {
+                            Text("📸 Scan Receipt / Price Tag")
+                        }
+                    }
                 }
             }
 
