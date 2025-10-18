@@ -37,6 +37,7 @@ import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import com.example.cstore.BuildConfig
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -56,7 +57,7 @@ fun HomeScreen(
     LaunchedEffect(Unit) {
         viewModel.loadListings()
         // Load weather for Melbourne as default
-        viewModel.loadWeather(-37.8136, 144.9631, "dd6f05f68644e8fa202315bd4704d451")
+        viewModel.loadWeather(-37.8136, 144.9631, BuildConfig.OPENWEATHER_API_KEY)
     }
 
         Scaffold(
