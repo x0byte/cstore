@@ -64,6 +64,17 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.asImageBitmap
 import android.graphics.BitmapFactory
 import android.provider.MediaStore
+import android.location.Geocoder
+import java.util.Locale
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
+import com.google.android.gms.location.Priority
+import com.google.android.gms.tasks.CancellationTokenSource
+
+
+
+
+
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -75,7 +86,9 @@ fun CreateListingScreen(
 ) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
-
+    val fusedClient: FusedLocationProviderClient = remember {
+        LocationServices.getFusedLocationProviderClient(context)
+    }
     var title by remember { mutableStateOf("") }
     var description by remember { mutableStateOf("") }
     var category by remember { mutableStateOf("") }
@@ -127,19 +140,95 @@ fun CreateListingScreen(
 
     val permissionLauncher = rememberLauncherForActivityResult(
         ActivityResultContracts.RequestMultiplePermissions()
-    ) { /* result ignored; we attempt getLastLocation after */ }
+    ) { permissions ->
+        val fineLocationGranted = permissions[Manifest.permission.ACCESS_FINE_LOCATION] ?: false
+        val coarseLocationGranted = permissions[Manifest.permission.ACCESS_COARSE_LOCATION] ?: false
 
-    val fusedClient: FusedLocationProviderClient = remember { LocationServices.getFusedLocationProviderClient(context) }
+        android.util.Log.d("LocationDebug", "Permission result - Fine: $fineLocationGranted, Coarse: $coarseLocationGranted")
 
-    @SuppressLint("MissingPermission")
-    fun requestLocation() {
-        permissionLauncher.launch(arrayOf(Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION))
-        fusedClient.lastLocation.addOnSuccessListener { loc ->
-            if (loc != null) {
-                latitude = loc.latitude
-                longitude = loc.longitude
+        if (fineLocationGranted || coarseLocationGranted) {
+            @SuppressLint("MissingPermission")
+            run {
+                val cancellationTokenSource = CancellationTokenSource()
+
+                fusedClient.getCurrentLocation(
+                    Priority.PRIORITY_HIGH_ACCURACY,
+                    cancellationTokenSource.token
+                ).addOnSuccessListener { loc ->
+                    if (loc != null) {
+                        android.util.Log.d("LocationDebug", "Current location: ${loc.latitude}, ${loc.longitude}")
+
+                        latitude = loc.latitude
+                        longitude = loc.longitude
+
+                        scope.launch(Dispatchers.IO) {
+                            try {
+                                val geocoder = Geocoder(context, Locale.getDefault())
+
+                                @Suppress("DEPRECATION")
+                                val addresses = geocoder.getFromLocation(loc.latitude, loc.longitude, 1)
+
+                                if (!addresses.isNullOrEmpty()) {
+                                    val address = addresses[0]
+                                    val parts = mutableListOf<String>()
+                                    address.thoroughfare?.let { parts.add(it) }
+                                    address.locality?.let { parts.add(it) }
+                                    address.adminArea?.let { parts.add(it) }
+                                    withContext(Dispatchers.Main) {
+                                        locationName = if (parts.isNotEmpty()) {
+                                            parts.joinToString(", ")
+                                        } else {
+                                            "Unknown location"
+                                        }
+                                        android.util.Log.d("LocationDebug", "Address resolved: $locationName")
+                                    }
+                                } else {
+                                    withContext(Dispatchers.Main) {
+                                        locationName = "Lat: ${loc.latitude}, Lon: ${loc.longitude}"
+                                    }
+                                }
+                            } catch (e: Exception) {
+                                android.util.Log.e("LocationDebug", "Geocoding error: ${e.message}", e)
+                                withContext(Dispatchers.Main) {
+                                    locationName = "Lat: ${loc.latitude}, Lon: ${loc.longitude}"
+                                }
+                            }
+                        }
+
+                    } else {
+                        android.util.Log.w("LocationDebug", "Current location is null, trying lastLocation...")
+
+                        fusedClient.lastLocation.addOnSuccessListener { lastLoc ->
+                            if (lastLoc != null) {
+                                latitude = lastLoc.latitude
+                                longitude = lastLoc.longitude
+                                locationName = "Lat: ${lastLoc.latitude}, Lon: ${lastLoc.longitude}"
+                            } else {
+                                error = "Could not get location. Please enter manually."
+                            }
+                        }.addOnFailureListener { e ->
+                            android.util.Log.e("LocationDebug", "lastLocation failed: ${e.message}", e)
+                            error = "Location error: ${e.message}"
+                        }
+                    }
+                }.addOnFailureListener { e ->
+                    android.util.Log.e("LocationDebug", "getCurrentLocation failed: ${e.message}", e)
+                    error = "Location error: ${e.message}"
+                }
             }
+
+        } else {
+            android.util.Log.w("LocationDebug", "Location permission denied")
+            error = "Location permission denied. Please enter location manually."
         }
+    }
+
+    fun requestLocation() {
+        android.util.Log.d("LocationDebug", "Requesting location permissions...")
+        permissionLauncher.launch(arrayOf(
+            Manifest.permission.ACCESS_FINE_LOCATION,
+            Manifest.permission.ACCESS_COARSE_LOCATION
+        ))
     }
 
     Surface(

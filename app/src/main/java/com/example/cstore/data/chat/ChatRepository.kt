@@ -22,7 +22,9 @@ data class ChatSummary(
     val participants: List<String> = emptyList(),
     val participantEmails: List<String> = emptyList(),
     val lastMessage: String = "",
-    val lastTimestamp: Long = 0
+    val lastTimestamp: Long = 0,
+    val listingId: String? = null,
+    val listingTitle: String? = null
 )
 class ChatRepository(
     private val db: FirebaseFirestore = FirebaseFirestore.getInstance()
@@ -52,7 +54,7 @@ class ChatRepository(
         val messagesRef = db.collection("chats")
             .document(conversationId)
             .collection("messages")
-            .orderBy("timestamp", Query.Direction.ASCENDING)
+            .orderBy("timestamp", Query.Direction.DESCENDING)
 
         val listener = messagesRef.addSnapshotListener { snapshot, error ->
             if (error != null) {
@@ -65,9 +67,15 @@ class ChatRepository(
         awaitClose { listener.remove() }
     }
 
-    suspend fun sendMessage(senderId: String, senderEmail: String,
-                            receiverId: String, receiverEmail: String,
-                            text: String) {
+    suspend fun sendMessage(
+        senderId: String,
+        senderEmail: String,
+        receiverId: String,
+        receiverEmail: String,
+        text: String,
+        listingId: String? = null,
+        listingTitle: String? = null
+    ) {
         val conversationId = getConversationId(senderId, receiverId)
         val chatRef = db.collection("chats").document(conversationId)
         val messagesRef = chatRef.collection("messages")
@@ -82,13 +90,19 @@ class ChatRepository(
             timestamp = System.currentTimeMillis()
         )
         messagesRef.document(newMsg.id).set(newMsg).await()
+        
         // Update chat summary
-        val summary = mapOf(
+        val summary = mutableMapOf<String, Any>(
             "participants" to listOf(senderId, receiverId),
             "participantEmails" to listOf(senderEmail, receiverEmail),
             "lastMessage" to text,
             "lastTimestamp" to newMsg.timestamp
         )
+        
+        // Add listing context if provided
+        if (listingId != null) summary["listingId"] = listingId
+        if (listingTitle != null) summary["listingTitle"] = listingTitle
+        
         chatRef.set(summary, com.google.firebase.firestore.SetOptions.merge()).await()
     }
 }

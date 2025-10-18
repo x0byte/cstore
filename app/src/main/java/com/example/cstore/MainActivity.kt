@@ -48,11 +48,21 @@ import java.util.concurrent.TimeUnit
 import com.google.android.gms.auth.api.signin.GoogleSignInOptions
 import com.google.android.gms.common.api.ApiException
 import com.google.android.gms.tasks.Task
+import com.google.android.libraries.places.api.Places
+
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
+        if (!com.google.android.libraries.places.api.Places.isInitialized()) {
+            com.google.android.libraries.places.api.Places.initialize(
+                applicationContext,
+                "AIzaSyAEvxa_lTlhEsu2tN9BpUu-Qt8plslxyrI"
+            )
+        }
+        // Schedule periodic event refresh worker (runs every 6 hours)
+        scheduleEventRefresh()
         
         // Schedule periodic event refresh worker (runs every 6 hours)
         scheduleEventRefresh()
@@ -217,13 +227,22 @@ fun App() {
         ) { backStackEntry ->
             val listingId = backStackEntry.arguments?.getString("listingId") ?: ""
             val itemDetailViewModel: ItemDetailViewModel = viewModel()
+            val currentUserId = authViewModel.currentUserUid()
 
             ItemDetailScreen(
                 listingId = listingId,
                 viewModel = itemDetailViewModel,
                 onBack = { navController.popBackStack() },
                 onRequestItem = { /* TODO */ },
-                onChatWithOwner = { /* TODO */ },
+                onChatWithOwner = { ownerId ->
+                    // Check if user is trying to chat with themselves
+                    if (ownerId == currentUserId) {
+                        // Show a toast or snackbar (for now, just don't navigate)
+                        return@ItemDetailScreen
+                    }
+                    // Navigate to chat with listing context
+                    navController.navigate("chat/$ownerId?listingId=$listingId")
+                },
                 onShareItem = { /* TODO */ }
             )
         }
@@ -238,13 +257,24 @@ fun App() {
         }
 
         composable(
-            "chat/{otherUserId}",
-            arguments = listOf(navArgument("otherUserId") { type = NavType.StringType })
+            "chat/{otherUserId}?listingId={listingId}",
+            arguments = listOf(
+                navArgument("otherUserId") { type = NavType.StringType },
+                navArgument("listingId") { 
+                    type = NavType.StringType
+                    nullable = true
+                    defaultValue = null
+                }
+            )
         ) { backStackEntry ->
             val otherUserId = backStackEntry.arguments?.getString("otherUserId") ?: ""
+            val listingId = backStackEntry.arguments?.getString("listingId")
+            
             ChatScreen(
                 authViewModel = authViewModel,
-                otherUserId = otherUserId
+                otherUserId = otherUserId,
+                listingId = listingId,
+                onBack = { navController.popBackStack() }
             )
         }
     }

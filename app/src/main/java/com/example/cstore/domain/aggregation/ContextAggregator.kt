@@ -89,8 +89,8 @@ object ContextAggregator {
 
     private fun buildBadges(score: Double, eventIntensity: Double, climate: Double): List<String> {
         val badges = mutableListOf<String>()
-        if (eventIntensity > 0.6) badges.add("Event nearby")
-        if (score > 0.75) badges.add("Trending")
+        if (eventIntensity > 0.3) badges.add("Event nearby")
+        if (score > 0.2) badges.add("Trending")
         return badges
     }
 }
