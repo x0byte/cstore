@@ -48,11 +48,21 @@ import java.util.concurrent.TimeUnit
 import com.google.android.gms.auth.api.signin.GoogleSignInOptions
 import com.google.android.gms.common.api.ApiException
 import com.google.android.gms.tasks.Task
+import com.google.android.libraries.places.api.Places
+
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
+        if (!com.google.android.libraries.places.api.Places.isInitialized()) {
+            com.google.android.libraries.places.api.Places.initialize(
+                applicationContext,
+                "AIzaSyAEvxa_lTlhEsu2tN9BpUu-Qt8plslxyrI"
+            )
+        }
+        // Schedule periodic event refresh worker (runs every 6 hours)
+        scheduleEventRefresh()
         
         // Schedule periodic event refresh worker (runs every 6 hours)
         scheduleEventRefresh()

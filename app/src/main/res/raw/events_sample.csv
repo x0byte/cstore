@@ -1,21 +1,21 @@
 id,title,start_time,end_time,latitude,longitude,category,venue
-1,Melbourne Music Week Opening,2025-10-17 18:00:00,2025-10-17 23:00:00,-37.8136,144.9631,Music,Town Hall
-2,Federation Square Night Market,2025-10-17 17:00:00,2025-10-17 23:00:00,-37.8179,144.9690,Market,Federation Square
-3,Southbank Evening Jazz,2025-10-17 19:00:00,2025-10-17 22:30:00,-37.8223,144.9643,Music,Southbank
-4,NGV Friday Nights,2025-10-24 18:00:00,2025-10-24 22:00:00,-37.8226,144.9689,Art,National Gallery of Victoria
-5,Southbank Weekend Pop-up,2025-10-25 11:00:00,2025-10-25 16:00:00,-37.8223,144.9643,Market,Southbank Promenade
-6,Federation Square Food Truck Festival,2025-10-20 12:00:00,2025-10-20 20:00:00,-37.8179,144.9690,Food,Federation Square
-7,St Kilda Esplanade Sunday Market,2025-10-20 10:00:00,2025-10-20 16:00:00,-37.8679,144.9769,Market,St Kilda Esplanade
-8,Melbourne Marathon,2025-10-13 07:00:00,2025-10-13 13:00:00,-37.8183,144.9671,Sports,Melbourne CBD
-9,Docklands Night Market,2025-10-19 17:00:00,2025-10-19 22:00:00,-37.8148,144.9450,Market,Docklands
-10,Carlton Gardens Spring Fair,2025-10-26 10:00:00,2025-10-26 17:00:00,-37.8047,144.9717,Outdoor,Carlton Gardens
-11,Melbourne Comedy Festival Launch,2025-10-21 19:00:00,2025-10-21 23:00:00,-37.8103,144.9686,Entertainment,Melbourne Town Hall
-12,Brunswick Street Festival,2025-10-27 11:00:00,2025-10-27 19:00:00,-37.7992,144.9781,Street Festival,Brunswick Street
-13,Collingwood Farmers Market,2025-10-19 08:00:00,2025-10-19 13:00:00,-37.8049,144.9891,Market,Collingwood Children's Farm
-14,Melbourne Cup Carnival,2025-11-05 10:00:00,2025-11-05 18:00:00,-37.8226,144.8972,Sports,Flemington Racecourse
-15,Fitzroy Night Market,2025-10-18 17:00:00,2025-10-18 22:00:00,-37.7992,144.9781,Market,Fitzroy
-16,Yarra River Outdoor Yoga,2025-10-20 07:00:00,2025-10-20 09:00:00,-37.8225,144.9631,Outdoor,Yarra River
-17,Chapel Street Bazaar,2025-10-26 10:00:00,2025-10-26 16:00:00,-37.8536,144.9955,Market,Chapel Street
-18,Melbourne Fringe Festival Opening,2025-10-23 18:00:00,2025-10-23 22:00:00,-37.8136,144.9631,Arts,Melbourne CBD
-19,Prahran Market Weekend,2025-10-19 07:00:00,2025-10-19 17:00:00,-37.8515,145.0031,Market,Prahran Market
-20,Degraves Street Jazz Night,2025-10-24 19:00:00,2025-10-24 23:00:00,-37.8172,144.9685,Music,Degraves Street
+1,Melbourne Music Evening,2025-10-18 17:00:00,2025-10-18 21:00:00,-37.8136,144.9631,Music,Town Hall
+2,Fed Square Night Market,2025-10-18 17:30:00,2025-10-18 20:30:00,-37.8179,144.9690,Market,Federation Square
+3,Southbank Jazz Session,2025-10-18 18:30:00,2025-10-18 20:30:00,-37.8223,144.9643,Music,Southbank
+4,Sunday Riverside Walk,2025-10-19 10:00:00,2025-10-19 12:00:00,-37.8200,144.9635,Outdoor,Yarra River
+5,St Kilda Sunday Market,2025-10-19 09:00:00,2025-10-19 13:00:00,-37.8679,144.9769,Market,St Kilda Esplanade
+6,Weekday Pop-up Art,2025-10-21 18:00:00,2025-10-21 20:30:00,-37.8226,144.9689,Art,NGV
+7,Midweek Food Trucks,2025-10-23 18:00:00,2025-10-23 20:30:00,-37.8179,144.9690,Food,Federation Square
+8,Carlton Gardens Fair,2025-10-26 11:00:00,2025-10-26 15:00:00,-37.8047,144.9717,Outdoor,Carlton Gardens
+9,Saturday Makers Market,2025-10-25 16:30:00,2025-10-25 19:30:00,-37.8148,144.9450,Market,Docklands
+10,NGV Friday Nights,2025-10-24 18:00:00,2025-10-24 21:30:00,-37.8226,144.9689,Art,National Gallery of Victoria
+11,Comedy Evening,2025-10-28 19:00:00,2025-10-28 21:30:00,-37.8103,144.9686,Entertainment,Melbourne Town Hall
+12,Brunch & Beats,2025-11-02 11:00:00,2025-11-02 13:00:00,-37.7992,144.9781,Music,Fitzroy
+13,Spring Market,2025-11-02 10:00:00,2025-11-02 14:00:00,-37.8515,145.0031,Market,Prahran Market
+14,Wednesday Jazz,2025-11-05 18:30:00,2025-11-05 20:30:00,-37.8172,144.9685,Music,Degraves Street
+15,Friday Twilight Art,2025-11-08 18:00:00,2025-11-08 20:30:00,-37.8226,144.9689,Art,NGV
+16,Southbank Food Fest,2025-11-16 12:00:00,2025-11-16 15:00:00,-37.8223,144.9643,Food,Southbank
+17,CBD Lunchtime Piano,2025-11-20 12:15:00,2025-11-20 13:15:00,-37.8136,144.9631,Music,Melbourne CBD
+18,Saturday Night Lights,2025-11-22 18:00:00,2025-11-22 21:00:00,-37.8179,144.9690,Entertainment,Fed Square
+19,Chapel Street Pop-up,2025-11-23 14:00:00,2025-11-23 16:30:00,-37.8536,144.9955,Shopping,Chapel Street
+20,End-of-Spring Picnic,2025-11-30 11:00:00,2025-11-30 13:30:00,-37.8049,144.9891,Outdoor,Collingwood
